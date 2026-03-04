@@ -63,96 +63,100 @@ export function DeckBuilder({ playerColor, onComplete }: DeckBuilderProps) {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 flex-1 min-h-0 overflow-hidden mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 flex-1 min-h-0 overflow-y-auto mb-4">
         {/* Minion Catalog */}
-        <Card className="lg:col-span-2 flex flex-col h-full border-white/10 bg-card/50 backdrop-blur-sm overflow-hidden order-2 lg:order-1">
-          <CardHeader className="py-4 shrink-0">
-            <CardTitle className="text-xl">Available Units</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 min-h-0 p-0">
-            <ScrollArea className="h-full px-4 md:px-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-6">
-                {MINION_MASTER_LIST.filter(m => m.type !== "Villager").map(minion => (
-                  <div 
-                    key={minion.type}
-                    className="p-3 md:p-4 rounded-xl border border-white/5 bg-zinc-900/40 hover:bg-zinc-800/60 transition-colors group relative cursor-pointer"
-                    onClick={() => addToDeck(minion.type)}
-                  >
-                    <div className="flex items-start gap-3 mb-2">
-                      <div className={cn(
-                        "p-2 rounded-lg shrink-0",
-                        playerColor === 'Blue' ? "bg-blue-500/10 text-blue-400" : "bg-red-500/10 text-red-400"
-                      )}>
-                        <MinionIcon type={minion.type} className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 overflow-hidden">
-                        <div className="flex justify-between items-center gap-2">
-                          <h3 className="font-semibold truncate text-sm md:text-base">{minion.type}</h3>
-                          <span className="text-yellow-500 text-xs md:text-sm font-bold whitespace-nowrap">{minion.cost} Mana</span>
+        <div className="lg:col-span-2 flex flex-col h-full order-2 lg:order-1 min-h-[400px] resize-y overflow-hidden border border-white/10 rounded-lg">
+          <Card className="flex flex-col h-full border-none bg-card/50 backdrop-blur-sm rounded-none">
+            <CardHeader className="py-4 shrink-0">
+              <CardTitle className="text-xl">Available Units</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 min-h-0 p-0">
+              <ScrollArea className="h-full px-4 md:px-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-6">
+                  {MINION_MASTER_LIST.filter(m => m.type !== "Villager").map(minion => (
+                    <div 
+                      key={minion.type}
+                      className="p-3 md:p-4 rounded-xl border border-white/5 bg-zinc-900/40 hover:bg-zinc-800/60 transition-colors group relative cursor-pointer"
+                      onClick={() => addToDeck(minion.type)}
+                    >
+                      <div className="flex items-start gap-3 mb-2">
+                        <div className={cn(
+                          "p-2 rounded-lg shrink-0",
+                          playerColor === 'Blue' ? "bg-blue-500/10 text-blue-400" : "bg-red-500/10 text-red-400"
+                        )}>
+                          <MinionIcon type={minion.type} className="w-5 h-5" />
                         </div>
-                        <p className="text-[10px] md:text-xs text-muted-foreground leading-tight mt-1 line-clamp-2">{minion.specialAbilities}</p>
+                        <div className="flex-1 overflow-hidden">
+                          <div className="flex justify-between items-center gap-2">
+                            <h3 className="font-semibold truncate text-sm md:text-base">{minion.type}</h3>
+                            <span className="text-yellow-500 text-xs md:text-sm font-bold whitespace-nowrap">{minion.cost} Mana</span>
+                          </div>
+                          <p className="text-[10px] md:text-xs text-muted-foreground leading-tight mt-1 line-clamp-2">{minion.specialAbilities}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 mt-3 text-[9px] md:text-[10px] uppercase tracking-wider text-white/40">
+                        <div>
+                          <span className="block font-bold text-white/60 mb-1">Move</span>
+                          {minion.movementPattern}
+                        </div>
+                        <div>
+                          <span className="block font-bold text-white/60 mb-1">Attack</span>
+                          {minion.attackPattern}
+                        </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 mt-3 text-[9px] md:text-[10px] uppercase tracking-wider text-white/40">
-                      <div>
-                        <span className="block font-bold text-white/60 mb-1">Move</span>
-                        {minion.movementPattern}
-                      </div>
-                      <div>
-                        <span className="block font-bold text-white/60 mb-1">Attack</span>
-                        {minion.attackPattern}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Current Deck - Vertically Scalable */}
-        <Card className={cn(
-          "flex flex-col h-full bg-card/50 backdrop-blur-sm overflow-hidden order-1 lg:order-2",
+        {/* Current Deck */}
+        <div className={cn(
+          "flex flex-col h-full order-1 lg:order-2 min-h-[400px] resize-y overflow-hidden border rounded-lg",
           playerColor === 'Blue' ? "border-blue-500/20" : "border-red-500/20"
         )}>
-          <CardHeader className="py-4 shrink-0">
-            <CardTitle className="flex justify-between items-center text-xl">
-              Army List
-              <span className={cn(
-                "text-sm px-2 py-0.5 rounded-full",
-                deck.length === DECK_SIZE ? "bg-green-500/20 text-green-400" : "bg-white/10 text-white/60"
-              )}>
-                {deck.length}/{DECK_SIZE}
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 min-h-0 p-0">
-            <ScrollArea className="h-full px-4 md:px-6">
-              <div className="space-y-2 pb-6">
-                {deck.map((type, i) => (
-                  <div key={`${type}-${i}`} className="flex items-center justify-between p-2 md:p-3 rounded-lg bg-zinc-900/40 border border-white/5 group hover:border-white/20 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <MinionIcon type={type} className={cn(
-                        "w-4 h-4",
-                        playerColor === 'Blue' ? "text-blue-400" : "text-red-400"
-                      )} />
-                      <span className="text-xs md:text-sm font-medium">{type}</span>
+          <Card className="flex flex-col h-full border-none bg-card/50 backdrop-blur-sm rounded-none">
+            <CardHeader className="py-4 shrink-0">
+              <CardTitle className="flex justify-between items-center text-xl">
+                Army List
+                <span className={cn(
+                  "text-sm px-2 py-0.5 rounded-full",
+                  deck.length === DECK_SIZE ? "bg-green-500/20 text-green-400" : "bg-white/10 text-white/60"
+                )}>
+                  {deck.length}/{DECK_SIZE}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 min-h-0 p-0">
+              <ScrollArea className="h-full px-4 md:px-6">
+                <div className="space-y-2 pb-6">
+                  {deck.map((type, i) => (
+                    <div key={`${type}-${i}`} className="flex items-center justify-between p-2 md:p-3 rounded-lg bg-zinc-900/40 border border-white/5 group hover:border-white/20 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <MinionIcon type={type} className={cn(
+                          "w-4 h-4",
+                          playerColor === 'Blue' ? "text-blue-400" : "text-red-400"
+                        )} />
+                        <span className="text-xs md:text-sm font-medium">{type}</span>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-7 w-7 p-0 lg:opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10"
+                        onClick={() => removeFromDeck(i)}
+                        disabled={type === "Villager"}
+                      >
+                        ×
+                      </Button>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-7 w-7 p-0 lg:opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10"
-                      onClick={() => removeFromDeck(i)}
-                      disabled={type === "Villager"}
-                    >
-                      ×
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

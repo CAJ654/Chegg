@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -490,7 +489,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         </div>
       </div>
 
-      {/* Sidebar - Vertically Scalable Container */}
+      {/* Sidebar - Vertically Resizable Container */}
       <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/50 backdrop-blur-xl flex flex-col overflow-hidden h-[45vh] lg:h-screen">
         <div className="p-4 lg:p-6 border-b border-white/5 bg-primary/5 shrink-0">
           <div className="flex justify-between items-end mb-2 lg:mb-4">
@@ -520,8 +519,8 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           </div>
         </div>
 
-        {/* Scalable Content Area */}
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+        {/* Resizable Content Area */}
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0 resize-y">
           <ScrollArea className="flex-1">
             <div className="p-4 lg:p-6 space-y-6">
               {/* Hand Section */}
