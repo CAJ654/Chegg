@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -59,7 +60,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     const isEndingRedTurn = gameState.currentPlayer === 'Red';
     const nextPlayer = isEndingRedTurn ? 'Blue' : 'Red';
     
-    // A full turn consists of both Blue and Red playing.
     const nextTurnNumber = isEndingRedTurn ? gameState.turnNumber + 1 : gameState.turnNumber;
     const nextMaxMana = Math.min(6, nextTurnNumber);
     
@@ -85,7 +85,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         return cell;
       }));
 
-      // Draw card logic
       let newBlueHand = [...prev.blueHand];
       let newBlueDeck = [...prev.blueDeck];
       let newRedHand = [...prev.redHand];
@@ -119,7 +118,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
   const handleTileClick = (x: number, y: number) => {
     if (!gameState || gameState.winner) return;
 
-    // --- Placement Phase Logic ---
     if (placementPhase !== 'done') {
       if (placementPhase === 'blue') {
         if (y > 7 && !gameState.board[y][x].minion) {
@@ -169,7 +167,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       return;
     }
 
-    // --- Combat / Action Logic ---
     const action = validActions.find(a => a.x === x && a.y === y);
     if (action) {
       if (action.type === 'spawn' && spawningMinion) {
@@ -196,13 +193,13 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
   const executeAction = (fromX: number, fromY: number, toX: number, toY: number, type: ActionType) => {
     let manaRequired = 0;
-    const minion = { ...gameState!.board[fromY][fromX].minion! };
+    const attacker = { ...gameState!.board[fromY][fromX].minion! };
 
     if (type === 'move' || type === 'dash') {
-      const isDash = minion.hasMovedThisTurn;
-      manaRequired = isDash ? (minion.isVillager ? 2 : 1) : (minion.isVillager ? 1 : 0);
+      const isDash = attacker.hasMovedThisTurn;
+      manaRequired = isDash ? (attacker.isVillager ? 2 : 1) : (attacker.isVillager ? 1 : 0);
     } else if (type === 'attack') {
-      manaRequired = minion.type === "Wither" ? 2 : 1;
+      manaRequired = attacker.type === "Wither" ? 2 : 1;
     }
 
     if (currentMana < manaRequired) {
@@ -210,7 +207,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       return;
     }
 
-    // Deduct mana
     setCurrentMana(prev => prev - manaRequired);
 
     setGameState(prev => {
@@ -228,9 +224,60 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         log(`${prev.currentPlayer} ${updatedMinion.type} moved to (${toX}, ${toY}).`);
       } else if (type === 'attack') {
         updatedMinion.hasAttackedThisTurn = true;
+        
+        // Handle Creeper Explosion
+        if (updatedMinion.type === 'Creeper') {
+          log(`${prev.currentPlayer} Creeper DETONATED!`);
+          newBoard[fromY][fromX].minion = null; 
+          
+          const directions = [
+            { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
+            { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
+            { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
+          ];
+
+          let blueVillagerDead = false;
+          let redVillagerDead = false;
+
+          directions.forEach(d => {
+            const nx = fromX + d.dx;
+            const ny = fromY + d.dy;
+            if (nx >= 0 && nx < 8 && ny >= 0 && ny < 10) {
+              const victim = newBoard[ny][nx].minion;
+              if (victim) {
+                log(`Explosion destroyed ${victim.owner} ${victim.type}`);
+                if (victim.isVillager) {
+                  if (victim.owner === 'Blue') blueVillagerDead = true;
+                  else redVillagerDead = true;
+                }
+                newBoard[ny][nx].minion = null;
+              }
+            }
+          });
+
+          let winner = prev.winner;
+          if (redVillagerDead && !blueVillagerDead) winner = 'Blue';
+          else if (blueVillagerDead && !redVillagerDead) winner = 'Red';
+          else if (blueVillagerDead && redVillagerDead) winner = prev.currentPlayer === 'Blue' ? 'Blue' : 'Red';
+
+          return { ...prev, board: newBoard, winner };
+        }
+
+        // Standard Attack
         const target = newBoard[toY][toX].minion;
         if (target) {
           log(`${prev.currentPlayer} ${updatedMinion.type} attacked ${target.owner} ${target.type}.`);
+          
+          // Handle Multi-HP Units (Wither)
+          if (target.type === 'Wither') {
+            const currentHP = target.currentHealth ?? 3;
+            if (currentHP > 1) {
+              newBoard[toY][toX].minion = { ...target, currentHealth: currentHP - 1 };
+              log(`Wither takes damage! ${currentHP - 1} HP remaining.`);
+              return { ...prev, board: newBoard };
+            }
+          }
+
           if (target.isVillager) {
             return { ...prev, winner: prev.currentPlayer, board: newBoard };
           }
@@ -288,7 +335,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       return;
     }
 
-    // Deduct mana
     setCurrentMana(prev => prev - data.cost);
 
     setGameState(prev => {
