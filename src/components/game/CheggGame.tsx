@@ -420,6 +420,11 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
                             (placementPhase === 'red' && gameState.currentPlayer === 'Red');
   const displayedHand = isMyPlacementPhase ? ["Villager", ...currentHand] : currentHand;
 
+  // Determine display orientation
+  const isRedTurn = gameState.currentPlayer === 'Red';
+  const displayBoard = isRedTurn ? [...gameState.board].reverse() : gameState.board;
+  const displayRowLabels = isRedTurn ? [...ROW_LABELS].reverse() : ROW_LABELS;
+
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-background overflow-hidden">
       <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 relative min-h-0">
@@ -460,30 +465,30 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             <div className="flex items-center">
                 {/* Left Row Labels */}
                 <div className="flex flex-col h-[min(112.5vw,81.25vh)] justify-around pr-1 md:pr-2">
-                    {ROW_LABELS.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 w-4 text-right">{l}</span>)}
+                    {displayRowLabels.map((l, i) => <span key={`left-${i}`} className="text-[10px] md:text-xs font-headline text-white/30 w-4 text-right">{l}</span>)}
                 </div>
 
                 <div className="relative bg-zinc-900/50 p-1 md:p-2 rounded-xl border border-white/10 shadow-2xl max-w-full">
                     <div className="game-board w-[min(90vw,65vh)] h-[min(112.5vw,81.25vh)] shadow-2xl">
-                        {gameState.board.map((row, y) => 
-                        row.map((cell, x) => (
-                            <BoardTile 
-                            key={`${x}-${y}`} 
-                            cell={cell} 
-                            isSelected={selectedTile?.x === x && selectedTile?.y === y}
-                            isValidMove={validActions.some(a => a.x === x && a.y === y && a.type === 'move')}
-                            isValidAttack={validActions.some(a => a.x === x && a.y === y && a.type === 'attack')}
-                            isValidSpawn={validActions.some(a => a.x === x && a.y === y && a.type === 'spawn')}
-                            onClick={() => handleTileClick(x, y)}
-                            />
-                        ))
-                        )}
+                        {displayBoard.map((row, displayY) => {
+                          return row.map((cell, x) => (
+                              <BoardTile 
+                              key={`${x}-${cell.y}`} 
+                              cell={cell} 
+                              isSelected={selectedTile?.x === x && selectedTile?.y === cell.y}
+                              isValidMove={validActions.some(a => a.x === x && a.y === cell.y && a.type === 'move')}
+                              isValidAttack={validActions.some(a => a.x === x && a.y === cell.y && a.type === 'attack')}
+                              isValidSpawn={validActions.some(a => a.x === x && a.y === cell.y && a.type === 'spawn')}
+                              onClick={() => handleTileClick(x, cell.y)}
+                              />
+                          ))
+                        })}
                     </div>
                 </div>
 
                 {/* Right Row Labels */}
                 <div className="flex flex-col h-[min(112.5vw,81.25vh)] justify-around pl-1 md:pl-2">
-                    {ROW_LABELS.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 w-4">{l}</span>)}
+                    {displayRowLabels.map((l, i) => <span key={`right-${i}`} className="text-[10px] md:text-xs font-headline text-white/30 w-4">{l}</span>)}
                 </div>
             </div>
 
