@@ -46,19 +46,19 @@
 }
 
 .tile-dark {
-  @apply bg-zinc-900/50;
+  @apply bg-zinc-950;
 }
 
 .tile-light {
-  @apply bg-zinc-700/30;
+  @apply bg-zinc-100;
 }
 
 .spawn-zone-red {
-  @apply ring-1 ring-red-500/30 bg-red-500/5;
+  @apply ring-1 ring-inset ring-red-500/40 bg-red-500/10;
 }
 
 .spawn-zone-blue {
-  @apply ring-1 ring-blue-500/30 bg-blue-500/5;
+  @apply ring-1 ring-inset ring-blue-500/40 bg-blue-500/10;
 }
 
 /* Custom scrollbar for game elements */
