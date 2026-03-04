@@ -26,7 +26,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
   const [spawningMinion, setSpawningMinion] = useState<string | null>(null);
 
   useEffect(() => {
-    // For 2-player local, we'll give both players the same deck build or randomized copies
+    // For 2-player local, randomized copies for red side
     const deck2 = [...playerDeck].sort(() => Math.random() - 0.5);
     setGameState(createInitialState(playerDeck, deck2));
   }, [playerDeck]);
@@ -42,6 +42,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     if (!gameState) return;
     
     const nextPlayer = gameState.currentPlayer === 'Blue' ? 'Red' : 'Blue';
+    // Mana capacity increases every 2 turns (one full cycle of players)
     const nextMaxMana = Math.min(6, Math.floor((gameState.turnNumber + 1) / 2) + 1);
     
     setGameState(prev => {
@@ -142,6 +143,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
             return { ...prev, board: newBoard };
           });
           setPlacementPhase('done');
+          setCurrentMana(1); // Start with 1 mana
           log("Villagers placed. Combat begins. Blue starts.");
         }
       }
@@ -174,16 +176,22 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
   };
 
   const executeAction = (fromX: number, fromY: number, toX: number, toY: number, type: ActionType) => {
+    let manaRequired = 0;
+    
     setGameState(prev => {
       if (!prev) return null;
       const newBoard = prev.board.map(row => row.map(cell => ({ ...cell })));
-      let manaSpent = 0;
       const minion = { ...newBoard[fromY][fromX].minion! };
 
       if (type === 'move' || type === 'dash') {
         const isDash = minion.hasMovedThisTurn;
-        manaSpent = isDash ? (minion.isVillager ? 2 : 1) : (minion.isVillager ? 1 : 0);
+        manaRequired = isDash ? (minion.isVillager ? 2 : 1) : (minion.isVillager ? 1 : 0);
         
+        if (currentMana < manaRequired) {
+          toast({ title: "Insufficient Mana", description: "You cannot afford this movement.", variant: "destructive" });
+          return prev;
+        }
+
         minion.hasMovedThisTurn = true;
         if (isDash) minion.hasDashedThisTurn = true;
 
@@ -191,7 +199,13 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
         newBoard[toY][toX].minion = minion;
         log(`${prev.currentPlayer} ${minion.type} moved to (${toX}, ${toY}).`);
       } else if (type === 'attack') {
-        manaSpent = minion.type === "Wither" ? 2 : 1;
+        manaRequired = minion.type === "Wither" ? 2 : 1;
+
+        if (currentMana < manaRequired) {
+          toast({ title: "Insufficient Mana", description: "You cannot afford this attack.", variant: "destructive" });
+          return prev;
+        }
+
         minion.hasAttackedThisTurn = true;
 
         const target = newBoard[toY][toX].minion;
@@ -204,7 +218,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
         }
       }
 
-      setCurrentMana(prevMana => prevMana - manaSpent);
+      setCurrentMana(m => m - manaRequired);
       return { ...prev, board: newBoard };
     });
     setSelectedTile(null);
@@ -214,6 +228,13 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
   const startSpawn = (type: string) => {
     if (!gameState) return;
     const data = getMinionData(type);
+    
+    // Safety check for Villager duplicate (should already be handled by deck builder)
+    if (type === "Villager") {
+        toast({ title: "Invalid Action", description: "You already have a Villager on the board.", variant: "destructive" });
+        return;
+    }
+
     if (currentMana < data.cost) {
       toast({ title: "Insufficient Mana", description: `You need ${data.cost} mana to spawn this minion.`, variant: "destructive" });
       return;
@@ -241,6 +262,14 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
 
   const executeSpawn = (x: number, y: number, type: string) => {
     const data = getMinionData(type);
+    
+    if (currentMana < data.cost) {
+      toast({ title: "Insufficient Mana", description: "You can no longer afford this minion.", variant: "destructive" });
+      setSpawningMinion(null);
+      setValidActions([]);
+      return;
+    }
+
     setGameState(prev => {
       if (!prev) return null;
       const newBoard = prev.board.map(row => row.map(cell => ({ ...cell })));

@@ -14,6 +14,9 @@ export function DeckBuilder({ onComplete }: DeckBuilderProps) {
   const [deck, setDeck] = useState<string[]>(["Villager"]);
 
   const addToDeck = (type: string) => {
+    // Safety check: Don't allow more than 1 Villager and check deck size
+    if (type === "Villager" && deck.includes("Villager")) return;
+    
     if (deck.length < DECK_SIZE) {
       setDeck([...deck, type]);
     }
@@ -33,14 +36,23 @@ export function DeckBuilder({ onComplete }: DeckBuilderProps) {
           <h1 className="text-3xl md:text-4xl font-headline text-primary">Assemble Your Army</h1>
           <p className="text-sm md:text-base text-muted-foreground">Select 15 minions. Your Villager is already in place.</p>
         </div>
-        <Button 
-          disabled={deck.length !== DECK_SIZE} 
-          onClick={() => onComplete(deck)}
-          size="lg"
-          className="bg-primary hover:bg-primary/80 w-full md:w-auto"
-        >
-          Begin Conquest ({deck.length}/{DECK_SIZE})
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <Button 
+            variant="outline"
+            onClick={() => setDeck(["Villager"])}
+            className="w-full sm:w-auto"
+          >
+            Clear Deck
+          </Button>
+          <Button 
+            disabled={deck.length !== DECK_SIZE} 
+            onClick={() => onComplete(deck)}
+            size="lg"
+            className="bg-primary hover:bg-primary/80 w-full sm:w-auto"
+          >
+            Begin Conquest ({deck.length}/{DECK_SIZE})
+          </Button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 flex-1 min-h-0 overflow-hidden mb-4">

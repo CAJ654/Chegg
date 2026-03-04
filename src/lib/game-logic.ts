@@ -47,11 +47,17 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
   const moves: { x: number, y: number }[] = [];
   const data = getMinionData(minion.type);
   
-  // Dash restriction: Cannot move (even dash) after attack
+  // Rule: Villager first move costs 1 Mana
+  if (!minion.hasMovedThisTurn && minion.isVillager && currentMana < 1) {
+    return [];
+  }
+
+  // Rule: Dash restriction (second move costs 1, Villager costs 2)
   if (minion.hasMovedThisTurn && !minion.hasDashedThisTurn) {
     const dashCost = minion.isVillager ? 2 : 1;
     if (currentMana < dashCost) return [];
   } else if (minion.hasMovedThisTurn && minion.hasDashedThisTurn) {
+    // Already moved and dashed
     return [];
   }
 
