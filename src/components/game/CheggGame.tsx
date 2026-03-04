@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { GameState, BoardCell, MinionInstance, ActionType } from "@/lib/game-types";
 import { createInitialState, getValidMoves, getValidAttacks, getMinionData } from "@/lib/game-logic";
 import { BoardTile } from "./BoardTile";
@@ -30,6 +31,22 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     const deck2 = [...playerDeck].sort(() => Math.random() - 0.5);
     setGameState(createInitialState(playerDeck, deck2));
   }, [playerDeck]);
+
+  // Effect to automatically show valid placement zones during deployment
+  useEffect(() => {
+    if (placementPhase === 'done' || !gameState) return;
+
+    const spawns: { x: number, y: number, type: ActionType }[] = [];
+    const minRow = placementPhase === 'blue' ? 8 : 0;
+    const maxRow = placementPhase === 'blue' ? 10 : 2;
+
+    for (let y = minRow; y < maxRow; y++) {
+      for (let x = 0; x < 8; x++) {
+        if (!gameState.board[y][x].minion) spawns.push({ x, y, type: 'spawn' });
+      }
+    }
+    setValidActions(spawns);
+  }, [placementPhase, gameState?.board]);
 
   const log = useCallback((message: string) => {
     setGameState(prev => prev ? {
@@ -119,7 +136,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
               hasMovedThisTurn: false,
               hasDashedThisTurn: false
             };
-            return { ...prev, board: newBoard };
+            return { ...prev, board: newBoard, currentPlayer: 'Red' };
           });
           setPlacementPhase('red');
           log("Blue Villager placed. Red, place your Villager.");
@@ -140,7 +157,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
               hasMovedThisTurn: false,
               hasDashedThisTurn: false
             };
-            return { ...prev, board: newBoard };
+            return { ...prev, board: newBoard, currentPlayer: 'Blue' };
           });
           setPlacementPhase('done');
           setCurrentMana(1); // Start with 1 mana
@@ -229,8 +246,8 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     if (!gameState) return;
     const data = getMinionData(type);
     
-    // Safety check for Villager duplicate (should already be handled by deck builder)
-    if (type === "Villager") {
+    // During normal combat, you shouldn't be spawning another villager
+    if (type === "Villager" && placementPhase === 'done') {
         toast({ title: "Invalid Action", description: "You already have a Villager on the board.", variant: "destructive" });
         return;
     }
@@ -304,9 +321,15 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     setValidActions([]);
   };
 
-  if (!gameState) return <div className="p-20 text-center">Preparing the Arena...</div>;
+  if (!gameState) return <div className="p-20 text-center text-white">Preparing the Arena...</div>;
 
   const currentHand = gameState.currentPlayer === 'Blue' ? gameState.blueHand : gameState.redHand;
+  
+  // Show Villager in hand specifically during the deployment phase
+  const isMyPlacementPhase = (placementPhase === 'blue' && gameState.currentPlayer === 'Blue') || 
+                            (placementPhase === 'red' && gameState.currentPlayer === 'Red');
+  
+  const displayedHand = isMyPlacementPhase ? ["Villager", ...currentHand] : currentHand;
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-background overflow-hidden">
@@ -316,11 +339,11 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
             "px-2 py-1 lg:px-4 lg:py-2 text-sm lg:text-lg transition-colors",
             gameState.currentPlayer === 'Blue' ? "border-blue-500 bg-blue-500/10 text-blue-400" : "border-red-500 bg-red-500/10 text-red-400"
           )}>
-            Turn {gameState.turnNumber} • {gameState.currentPlayer}'s Turn
+            {placementPhase === 'done' ? `Turn ${gameState.turnNumber} • ${gameState.currentPlayer}'s Turn` : `Deployment • ${gameState.currentPlayer}'s Turn`}
           </Badge>
           {placementPhase !== 'done' && (
             <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-500 border-yellow-500/50">
-              Placement: {placementPhase.toUpperCase()}
+              Place your King
             </Badge>
           )}
         </div>
@@ -394,15 +417,24 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
                   {gameState.currentPlayer} Hand
                 </h3>
                 <div className="grid grid-cols-2 lg:grid-cols-2 gap-2">
-                  {currentHand.map((type, i) => (
+                  {displayedHand.map((type, i) => (
                     <Card 
                       key={`${type}-${i}`} 
                       className={cn(
                         "cursor-pointer hover:border-primary/50 transition-all bg-zinc-900/50 border-white/5",
-                        getMinionData(type).cost > currentMana && "opacity-40 grayscale",
-                        spawningMinion === type && "ring-2 ring-primary bg-primary/10"
+                        getMinionData(type).cost > currentMana && placementPhase === 'done' && "opacity-40 grayscale",
+                        spawningMinion === type && "ring-2 ring-primary bg-primary/10",
+                        type === "Villager" && placementPhase !== 'done' && "border-yellow-500/50 bg-yellow-500/10"
                       )}
-                      onClick={() => startSpawn(type)}
+                      onClick={() => {
+                        if (placementPhase !== 'done') {
+                          if (type === "Villager") {
+                            toast({ title: "Deployment", description: "Click a highlighted tile to place your King." });
+                          }
+                          return;
+                        }
+                        startSpawn(type);
+                      }}
                     >
                       <CardContent className="p-2 lg:p-3">
                         <div className="flex items-center gap-2">
