@@ -22,17 +22,14 @@ export interface BoardCell {
 export interface GameState {
   currentPlayer: PlayerColor;
   opponentPlayer: PlayerColor;
-  currentMana: number;
-  maxManaCapacity: number;
-  playerHand: string[];
-  opponentHandSize: number;
-  playerDeck: string[];
-  opponentDeckSize: number;
+  redHand: string[];
+  blueHand: string[];
+  redDeck: string[];
+  blueDeck: string[];
   board: BoardCell[][];
   turnNumber: number;
   winner: PlayerColor | null;
   logs: string[];
-  isAITurn: boolean;
 }
 
 export type ActionType = 'spawn' | 'move' | 'dash' | 'attack' | 'useAbility';

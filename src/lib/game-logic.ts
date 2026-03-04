@@ -17,23 +17,23 @@ export function createInitialState(playerDeck: string[], opponentDeck: string[])
   }
 
   // Draw initial hands
-  const initialHand = playerDeck.slice(0, 3);
-  const remainingDeck = playerDeck.slice(3);
+  const blueHand = playerDeck.slice(0, 3);
+  const blueDeck = playerDeck.slice(3);
+  
+  const redHand = opponentDeck.slice(0, 3);
+  const redDeck = opponentDeck.slice(3);
 
   return {
-    currentPlayer: 'Blue', // Blue is typically human player
+    currentPlayer: 'Blue',
     opponentPlayer: 'Red',
-    currentMana: 1,
-    maxManaCapacity: 1,
-    playerHand: initialHand,
-    opponentHandSize: 3,
-    playerDeck: remainingDeck,
-    opponentDeckSize: 12,
+    blueHand,
+    blueDeck,
+    redHand,
+    redDeck,
     board,
     turnNumber: 1,
     winner: null,
-    logs: ["Game Started. Turn 1."],
-    isAITurn: false
+    logs: ["Game Started. Turn 1. Blue's Turn."],
   };
 }
 
@@ -41,7 +41,7 @@ export function getMinionData(type: string): MinionData {
   return MINION_MASTER_LIST.find(m => m.type === type)!;
 }
 
-export function getValidMoves(gameState: GameState, minion: MinionInstance, startX: number, startY: number): { x: number, y: number }[] {
+export function getValidMoves(gameState: GameState, minion: MinionInstance, startX: number, startY: number, currentMana: number): { x: number, y: number }[] {
   if (minion.hasSpawnSickness || minion.hasAttackedThisTurn) return [];
   
   const moves: { x: number, y: number }[] = [];
@@ -49,14 +49,12 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
   
   // Dash restriction: Cannot move (even dash) after attack
   if (minion.hasMovedThisTurn && !minion.hasDashedThisTurn) {
-    // Check if player has mana for dash
     const dashCost = minion.isVillager ? 2 : 1;
-    if (gameState.currentMana < dashCost) return [];
+    if (currentMana < dashCost) return [];
   } else if (minion.hasMovedThisTurn && minion.hasDashedThisTurn) {
     return [];
   }
 
-  // Basic 8-surrounding move logic used by many
   const directions = [
     { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
     { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
@@ -66,10 +64,7 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
   const checkTile = (tx: number, ty: number) => {
     if (tx < 0 || tx >= BOARD_COLS || ty < 0 || ty >= BOARD_ROWS) return false;
     if (gameState.board[ty][tx].minion) return false;
-    
-    // Phantom logic: Ethereal
     if (minion.type === "Phantom" && !gameState.board[ty][tx].isDarkTile) return false;
-    
     return true;
   };
 
@@ -84,12 +79,11 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
     for (let i = 1; i <= 3; i++) {
       const ny = startY + (dir * i);
       if (checkTile(startX, ny)) moves.push({ x: startX, y: ny });
-      else break; // blocked
+      else break; 
     }
   } else if (data.movementPattern === "4 lateral directions") {
     const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
     lats.forEach(d => {
-      // Logic for Shulker Box etc might vary but standard 1 tile for simple movement
       const nx = startX + d.dx;
       const ny = startY + d.dy;
       if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
@@ -99,12 +93,11 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
   return moves;
 }
 
-export function getValidAttacks(gameState: GameState, minion: MinionInstance, startX: number, startY: number): { x: number, y: number }[] {
+export function getValidAttacks(gameState: GameState, minion: MinionInstance, startX: number, startY: number, currentMana: number): { x: number, y: number }[] {
   if (minion.hasSpawnSickness || minion.hasAttackedThisTurn || minion.hasDashedThisTurn) return [];
   
-  // Wither attack costs 2 mana, others 1
   const attackCost = minion.type === "Wither" ? 2 : 1;
-  if (gameState.currentMana < attackCost) return [];
+  if (currentMana < attackCost) return [];
 
   const targets: { x: number, y: number }[] = [];
   const data = getMinionData(minion.type);
