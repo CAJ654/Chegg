@@ -366,9 +366,45 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
       log(`${prev.currentPlayer} summoned ${type} at ${COL_LABELS[x]}${ROW_LABELS[y]}.`);
 
+      let winner = prev.winner;
+
+      // Handle Wither Spawn Storm
+      if (type === 'Wither') {
+        log(`WITHER SPAWN STORM ACTIVATED!`);
+        const directions = [
+          { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
+          { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
+          { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
+        ];
+
+        let blueVillagerDead = false;
+        let redVillagerDead = false;
+
+        directions.forEach(d => {
+          const nx = x + d.dx;
+          const ny = y + d.dy;
+          if (nx >= 0 && nx < 8 && ny >= 0 && ny < 10) {
+            const victim = newBoard[ny][nx].minion;
+            if (victim) {
+              log(`Storm destroyed ${victim.owner} ${victim.type}`);
+              if (victim.isVillager) {
+                if (victim.owner === 'Blue') blueVillagerDead = true;
+                else redVillagerDead = true;
+              }
+              newBoard[ny][nx].minion = null;
+            }
+          }
+        });
+
+        if (redVillagerDead && !blueVillagerDead) winner = 'Blue';
+        else if (blueVillagerDead && !redVillagerDead) winner = 'Red';
+        else if (blueVillagerDead && redVillagerDead) winner = prev.currentPlayer === 'Blue' ? 'Blue' : 'Red';
+      }
+
       return {
         ...prev,
         board: newBoard,
+        winner,
         blueHand: prev.currentPlayer === 'Blue' ? newHand : prev.blueHand,
         redHand: prev.currentPlayer === 'Red' ? newHand : prev.redHand,
       };
