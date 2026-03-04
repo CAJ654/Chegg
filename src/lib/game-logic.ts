@@ -66,12 +66,6 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
     return [];
   }
 
-  const directions = [
-    { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
-    { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
-    { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
-  ];
-
   const checkTile = (tx: number, ty: number) => {
     if (tx < 0 || tx >= BOARD_COLS || ty < 0 || ty >= BOARD_ROWS) return false;
     if (gameState.board[ty][tx].minion) return false;
@@ -80,21 +74,33 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
   };
 
   if (data.movementPattern === "8 surrounding squares") {
+    const directions = [
+      { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
+      { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
+      { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
+    ];
     directions.forEach(d => {
       const nx = startX + d.dx;
       const ny = startY + d.dy;
       if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
     });
-  } else if (data.movementPattern === "3 squares forward only") {
+  } else if (data.movementPattern === "3 squares forward") {
     const dir = minion.owner === 'Blue' ? -1 : 1;
-    for (let i = 1; i <= 3; i++) {
-      const ny = startY + (dir * i);
-      if (checkTile(startX, ny)) moves.push({ x: startX, y: ny });
-      else break; 
-    }
+    const ny = startY + dir;
+    [-1, 0, 1].forEach(dx => {
+      const nx = startX + dx;
+      if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
+    });
   } else if (data.movementPattern === "4 lateral directions") {
     const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
     lats.forEach(d => {
+      const nx = startX + d.dx;
+      const ny = startY + d.dy;
+      if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
+    });
+  } else if (data.movementPattern === "2-tile lateral 'hop'") {
+    const hops = [{ dx: 2, dy: 0 }, { dx: -2, dy: 0 }, { dx: 0, dy: 2 }, { dx: 0, dy: -2 }];
+    hops.forEach(d => {
       const nx = startX + d.dx;
       const ny = startY + d.dy;
       if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
@@ -140,7 +146,10 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
       for (let i = 1; i <= 3; i++) {
         const nx = startX + (d.dx * i);
         const ny = startY + (d.dy * i);
-        if (checkEnemy(nx, ny)) targets.push({ x: nx, y: ny });
+        if (checkEnemy(nx, ny)) {
+            targets.push({ x: nx, y: ny });
+            break; // Blocked by first enemy hit
+        }
       }
     });
   }
