@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -27,10 +28,10 @@ export default function Home() {
 
   if (phase === 'landing') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-[#18141a] py-12">
+      <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-[#221D25] py-12">
         {/* Background glow effects */}
-        <div className="absolute top-[-20%] left-[-10%] width-[60%] height-[80%] rounded-full bg-primary/10 blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] width-[60%] height-[80%] rounded-full bg-secondary/10 blur-[120px]" />
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[80%] rounded-full bg-primary/10 blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[80%] rounded-full bg-secondary/10 blur-[120px]" />
 
         <main className="z-10 text-center px-6 max-w-4xl w-full">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs md:text-sm font-medium mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -82,11 +83,11 @@ export default function Home() {
   }
 
   if (phase === 'deckBlue') {
-    return <DeckBuilder playerColor="Blue" onComplete={completeBlueDeck} />;
+    return <DeckBuilder playerColor="Blue" onComplete={completeBlueDeck} key="deck-blue" />;
   }
 
   if (phase === 'deckRed') {
-    return <DeckBuilder playerColor="Red" onComplete={completeRedDeck} />;
+    return <DeckBuilder playerColor="Red" onComplete={completeRedDeck} key="deck-red" />;
   }
 
   return <CheggGame blueDeck={blueDeck} redDeck={redDeck} />;
