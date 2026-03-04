@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -57,11 +58,16 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
   const endTurn = useCallback(() => {
     if (!gameState) return;
     
-    const nextPlayer = gameState.currentPlayer === 'Blue' ? 'Red' : 'Blue';
-    // Mana capacity increases every 2 turns (one full cycle of players)
-    const nextMaxMana = Math.min(6, Math.floor((gameState.turnNumber + 1) / 2) + 1);
+    const isEndingRedTurn = gameState.currentPlayer === 'Red';
+    const nextPlayer = isEndingRedTurn ? 'Blue' : 'Red';
     
-    // Update local state for mana
+    // A full turn consists of both Blue and Red playing.
+    // Turn increments only when cycling back to Blue.
+    const nextTurnNumber = isEndingRedTurn ? gameState.turnNumber + 1 : gameState.turnNumber;
+    
+    // Mana capacity follows the turn number, capping at 6.
+    const nextMaxMana = Math.min(6, nextTurnNumber);
+    
     setMaxManaCapacity(nextMaxMana);
     setCurrentMana(nextMaxMana);
 
@@ -100,7 +106,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
         ...prev,
         currentPlayer: nextPlayer,
         opponentPlayer: prev.currentPlayer,
-        turnNumber: prev.turnNumber + 1,
+        turnNumber: nextTurnNumber,
         board: newBoard,
         blueHand: newBlueHand,
         blueDeck: newBlueDeck,
@@ -160,7 +166,8 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
             return { ...prev, board: newBoard, currentPlayer: 'Blue' };
           });
           setPlacementPhase('done');
-          setCurrentMana(1); // Start with 1 mana
+          setCurrentMana(1); 
+          setMaxManaCapacity(1);
           log("Villagers placed. Combat begins. Blue starts.");
         }
       }
@@ -194,7 +201,6 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
 
   const executeAction = (fromX: number, fromY: number, toX: number, toY: number, type: ActionType) => {
     let manaRequired = 0;
-    const minionData = getMinionData(gameState!.board[fromY][fromX].minion!.type);
     const minion = { ...gameState!.board[fromY][fromX].minion! };
 
     if (type === 'move' || type === 'dash') {
@@ -247,7 +253,6 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     if (!gameState) return;
     const data = getMinionData(type);
     
-    // During normal combat, you shouldn't be spawning another villager
     if (type === "Villager" && placementPhase === 'done') {
         toast({ title: "Invalid Action", description: "You already have a Villager on the board.", variant: "destructive" });
         return;
