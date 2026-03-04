@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -14,10 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface CheggGameProps {
-  playerDeck: string[];
+  blueDeck: string[];
+  redDeck: string[];
 }
 
-export function CheggGame({ playerDeck }: CheggGameProps) {
+export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [selectedTile, setSelectedTile] = useState<{ x: number, y: number } | null>(null);
   const [validActions, setValidActions] = useState<{ x: number, y: number, type: ActionType }[]>([]);
@@ -27,10 +27,8 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
   const [spawningMinion, setSpawningMinion] = useState<string | null>(null);
 
   useEffect(() => {
-    // For 2-player local, randomized copies for red side
-    const deck2 = [...playerDeck].sort(() => Math.random() - 0.5);
-    setGameState(createInitialState(playerDeck, deck2));
-  }, [playerDeck]);
+    setGameState(createInitialState(blueDeck, redDeck));
+  }, [blueDeck, redDeck]);
 
   // Effect to automatically show valid placement zones during deployment
   useEffect(() => {
@@ -62,10 +60,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     const nextPlayer = isEndingRedTurn ? 'Blue' : 'Red';
     
     // A full turn consists of both Blue and Red playing.
-    // Turn increments only when cycling back to Blue.
     const nextTurnNumber = isEndingRedTurn ? gameState.turnNumber + 1 : gameState.turnNumber;
-    
-    // Mana capacity follows the turn number, capping at 6.
     const nextMaxMana = Math.min(6, nextTurnNumber);
     
     setMaxManaCapacity(nextMaxMana);
@@ -145,7 +140,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
             return { ...prev, board: newBoard, currentPlayer: 'Red' };
           });
           setPlacementPhase('red');
-          log("Blue Villager placed. Red, place your Villager.");
+          log("Blue King placed. Red, position your King.");
         }
       } else if (placementPhase === 'red') {
         if (y < 2 && !gameState.board[y][x].minion) {
@@ -168,7 +163,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
           setPlacementPhase('done');
           setCurrentMana(1); 
           setMaxManaCapacity(1);
-          log("Villagers placed. Combat begins. Blue starts.");
+          log("Deployment complete. Combat begins. Blue starts.");
         }
       }
       return;
@@ -254,12 +249,12 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     const data = getMinionData(type);
     
     if (type === "Villager" && placementPhase === 'done') {
-        toast({ title: "Invalid Action", description: "You already have a Villager on the board.", variant: "destructive" });
+        toast({ title: "Invalid Action", description: "Your King is already on the battlefield.", variant: "destructive" });
         return;
     }
 
     if (currentMana < data.cost) {
-      toast({ title: "Insufficient Mana", description: `You need ${data.cost} mana to spawn this minion.`, variant: "destructive" });
+      toast({ title: "Insufficient Mana", description: `You need ${data.cost} mana to spawn this unit.`, variant: "destructive" });
       return;
     }
 
@@ -274,7 +269,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     }
 
     if (spawns.length === 0) {
-      toast({ title: "Spawn Zone Full", description: "Clear your spawn zone to bring in new units.", variant: "destructive" });
+      toast({ title: "Spawn Zone Full", description: "Clear your deployment zone to summon new units.", variant: "destructive" });
       return;
     }
 
@@ -287,7 +282,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     const data = getMinionData(type);
     
     if (currentMana < data.cost) {
-      toast({ title: "Insufficient Mana", description: "You can no longer afford this minion.", variant: "destructive" });
+      toast({ title: "Insufficient Mana", description: "You can no longer afford this unit.", variant: "destructive" });
       setSpawningMinion(null);
       setValidActions([]);
       return;
@@ -316,7 +311,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
         hasDashedThisTurn: false
       };
 
-      log(`${prev.currentPlayer} spawned ${type} at (${x}, ${y}).`);
+      log(`${prev.currentPlayer} summoned ${type} at (${x}, ${y}).`);
 
       return {
         ...prev,
@@ -332,11 +327,8 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
   if (!gameState) return <div className="p-20 text-center text-white">Preparing the Arena...</div>;
 
   const currentHand = gameState.currentPlayer === 'Blue' ? gameState.blueHand : gameState.redHand;
-  
-  // Show Villager in hand specifically during the deployment phase
   const isMyPlacementPhase = (placementPhase === 'blue' && gameState.currentPlayer === 'Blue') || 
                             (placementPhase === 'red' && gameState.currentPlayer === 'Red');
-  
   const displayedHand = isMyPlacementPhase ? ["Villager", ...currentHand] : currentHand;
 
   return (
@@ -351,7 +343,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
           </Badge>
           {placementPhase !== 'done' && (
             <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-500 border-yellow-500/50">
-              Place your King
+              Position your King
             </Badge>
           )}
         </div>

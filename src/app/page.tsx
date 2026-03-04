@@ -8,14 +8,20 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, Sword, Zap } from "lucide-react";
 
 export default function Home() {
-  const [phase, setPhase] = useState<'landing' | 'deck' | 'game'>('landing');
-  const [playerDeck, setPlayerDeck] = useState<string[]>([]);
+  const [phase, setPhase] = useState<'landing' | 'deckBlue' | 'deckRed' | 'game'>('landing');
+  const [blueDeck, setBlueDeck] = useState<string[]>([]);
+  const [redDeck, setRedDeck] = useState<string[]>([]);
   const [showRules, setShowRules] = useState(false);
 
-  const startDeckBuilding = () => setPhase('deck');
+  const startDeckBuilding = () => setPhase('deckBlue');
   
-  const startGame = (deck: string[]) => {
-    setPlayerDeck(deck);
+  const completeBlueDeck = (deck: string[]) => {
+    setBlueDeck(deck);
+    setPhase('deckRed');
+  };
+
+  const completeRedDeck = (deck: string[]) => {
+    setRedDeck(deck);
     setPhase('game');
   };
 
@@ -23,8 +29,8 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-[#18141a] py-12">
         {/* Background glow effects */}
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[80%] rounded-full bg-primary/10 blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[80%] rounded-full bg-secondary/10 blur-[120px]" />
+        <div className="absolute top-[-20%] left-[-10%] width-[60%] height-[80%] rounded-full bg-primary/10 blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] width-[60%] height-[80%] rounded-full bg-secondary/10 blur-[120px]" />
 
         <main className="z-10 text-center px-6 max-w-4xl w-full">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs md:text-sm font-medium mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
@@ -65,7 +71,7 @@ export default function Home() {
             </div>
             <div className="p-6 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
               <h3 className="text-primary font-headline text-lg md:text-xl mb-2">Tactical Depth</h3>
-              <p className="text-xs md:text-sm text-muted-foreground">Protect your Villager at all costs. Outsmart the AI opponent.</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Protect your Villager at all costs. Master both sides of the board.</p>
             </div>
           </div>
         </main>
@@ -75,9 +81,13 @@ export default function Home() {
     );
   }
 
-  if (phase === 'deck') {
-    return <DeckBuilder onComplete={startGame} />;
+  if (phase === 'deckBlue') {
+    return <DeckBuilder playerColor="Blue" onComplete={completeBlueDeck} />;
   }
 
-  return <CheggGame playerDeck={playerDeck} />;
+  if (phase === 'deckRed') {
+    return <DeckBuilder playerColor="Red" onComplete={completeRedDeck} />;
+  }
+
+  return <CheggGame blueDeck={blueDeck} redDeck={redDeck} />;
 }
