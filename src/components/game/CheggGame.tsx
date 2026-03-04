@@ -1,8 +1,7 @@
-
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { GameState, BoardCell, MinionInstance, ActionType } from "@/lib/game-types";
+import { useState, useEffect, useCallback } from "react";
+import { GameState, MinionInstance, ActionType } from "@/lib/game-types";
 import { createInitialState, getValidMoves, getValidAttacks, getMinionData } from "@/lib/game-logic";
 import { BoardTile } from "./BoardTile";
 import { Button } from "@/components/ui/button";
@@ -62,6 +61,10 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     // Mana capacity increases every 2 turns (one full cycle of players)
     const nextMaxMana = Math.min(6, Math.floor((gameState.turnNumber + 1) / 2) + 1);
     
+    // Update local state for mana
+    setMaxManaCapacity(nextMaxMana);
+    setCurrentMana(nextMaxMana);
+
     setGameState(prev => {
       if (!prev) return null;
       
@@ -92,9 +95,6 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
       } else if (nextPlayer === 'Red' && newRedDeck.length > 0) {
         newRedHand.push(newRedDeck.shift()!);
       }
-
-      setMaxManaCapacity(nextMaxMana);
-      setCurrentMana(nextMaxMana);
 
       return {
         ...prev,
@@ -194,40 +194,42 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
 
   const executeAction = (fromX: number, fromY: number, toX: number, toY: number, type: ActionType) => {
     let manaRequired = 0;
-    
+    const minionData = getMinionData(gameState!.board[fromY][fromX].minion!.type);
+    const minion = { ...gameState!.board[fromY][fromX].minion! };
+
+    if (type === 'move' || type === 'dash') {
+      const isDash = minion.hasMovedThisTurn;
+      manaRequired = isDash ? (minion.isVillager ? 2 : 1) : (minion.isVillager ? 1 : 0);
+    } else if (type === 'attack') {
+      manaRequired = minion.type === "Wither" ? 2 : 1;
+    }
+
+    if (currentMana < manaRequired) {
+      toast({ title: "Insufficient Mana", description: "You cannot afford this action.", variant: "destructive" });
+      return;
+    }
+
+    // Deduct mana
+    setCurrentMana(prev => prev - manaRequired);
+
     setGameState(prev => {
       if (!prev) return null;
       const newBoard = prev.board.map(row => row.map(cell => ({ ...cell })));
-      const minion = { ...newBoard[fromY][fromX].minion! };
+      const updatedMinion = { ...newBoard[fromY][fromX].minion! };
 
       if (type === 'move' || type === 'dash') {
-        const isDash = minion.hasMovedThisTurn;
-        manaRequired = isDash ? (minion.isVillager ? 2 : 1) : (minion.isVillager ? 1 : 0);
-        
-        if (currentMana < manaRequired) {
-          toast({ title: "Insufficient Mana", description: "You cannot afford this movement.", variant: "destructive" });
-          return prev;
-        }
-
-        minion.hasMovedThisTurn = true;
-        if (isDash) minion.hasDashedThisTurn = true;
+        const isDash = updatedMinion.hasMovedThisTurn;
+        updatedMinion.hasMovedThisTurn = true;
+        if (isDash) updatedMinion.hasDashedThisTurn = true;
 
         newBoard[fromY][fromX].minion = null;
-        newBoard[toY][toX].minion = minion;
-        log(`${prev.currentPlayer} ${minion.type} moved to (${toX}, ${toY}).`);
+        newBoard[toY][toX].minion = updatedMinion;
+        log(`${prev.currentPlayer} ${updatedMinion.type} moved to (${toX}, ${toY}).`);
       } else if (type === 'attack') {
-        manaRequired = minion.type === "Wither" ? 2 : 1;
-
-        if (currentMana < manaRequired) {
-          toast({ title: "Insufficient Mana", description: "You cannot afford this attack.", variant: "destructive" });
-          return prev;
-        }
-
-        minion.hasAttackedThisTurn = true;
-
+        updatedMinion.hasAttackedThisTurn = true;
         const target = newBoard[toY][toX].minion;
         if (target) {
-          log(`${prev.currentPlayer} ${minion.type} attacked ${target.owner} ${target.type}.`);
+          log(`${prev.currentPlayer} ${updatedMinion.type} attacked ${target.owner} ${target.type}.`);
           if (target.isVillager) {
             return { ...prev, winner: prev.currentPlayer, board: newBoard };
           }
@@ -235,7 +237,6 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
         }
       }
 
-      setCurrentMana(m => m - manaRequired);
       return { ...prev, board: newBoard };
     });
     setSelectedTile(null);
@@ -287,6 +288,9 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
       return;
     }
 
+    // Deduct mana
+    setCurrentMana(prev => prev - data.cost);
+
     setGameState(prev => {
       if (!prev) return null;
       const newBoard = prev.board.map(row => row.map(cell => ({ ...cell })));
@@ -307,7 +311,6 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
         hasDashedThisTurn: false
       };
 
-      setCurrentMana(m => m - data.cost);
       log(`${prev.currentPlayer} spawned ${type} at (${x}, ${y}).`);
 
       return {

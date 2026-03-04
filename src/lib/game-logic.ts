@@ -89,7 +89,7 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
     const dir = minion.owner === 'Blue' ? -1 : 1;
     for (let i = 1; i <= 3; i++) {
       const ny = startY + (dir * i);
-      if (checkTile(startX, ny)) moves.push({ x: startX, ny });
+      if (checkTile(startX, ny)) moves.push({ x: startX, y: ny });
       else break; 
     }
   } else if (data.movementPattern === "4 lateral directions") {
