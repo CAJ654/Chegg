@@ -34,7 +34,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     setGameState(createInitialState(blueDeck, redDeck));
   }, [blueDeck, redDeck]);
 
-  // Effect to automatically show valid placement zones during deployment
   useEffect(() => {
     if (placementPhase === 'done' || !gameState) return;
 
@@ -63,7 +62,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     const isEndingRedTurn = gameState.currentPlayer === 'Red';
     const nextPlayer = isEndingRedTurn ? 'Blue' : 'Red';
     
-    // Only increment turn and mana when Red finishes (one full cycle)
     const nextTurnNumber = isEndingRedTurn ? gameState.turnNumber + 1 : gameState.turnNumber;
     const nextMaxMana = Math.min(6, nextTurnNumber);
     
@@ -71,7 +69,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         setMaxManaCapacity(nextMaxMana);
     }
     
-    // Refresh mana for the next player
     setCurrentMana(nextMaxMana);
 
     setGameState(prev => {
@@ -233,7 +230,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       } else if (type === 'attack') {
         updatedMinion.hasAttackedThisTurn = true;
         
-        // Handle Creeper Explosion
         if (updatedMinion.type === 'Creeper') {
           log(`${prev.currentPlayer} Creeper DETONATED!`);
           newBoard[fromY][fromX].minion = null; 
@@ -271,7 +267,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           return { ...prev, board: newBoard, winner };
         }
 
-        // Standard Attack
         const target = newBoard[toY][toX].minion;
         if (target) {
           log(`${prev.currentPlayer} ${updatedMinion.type} attacked ${target.owner} ${target.type} at ${COL_LABELS[toX]}${ROW_LABELS[toY]}.`);
@@ -368,7 +363,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
       let winner = prev.winner;
 
-      // Handle Wither Spawn Storm
       if (type === 'Wither') {
         log(`WITHER SPAWN STORM ACTIVATED!`);
         const directions = [
@@ -420,7 +414,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
                             (placementPhase === 'red' && gameState.currentPlayer === 'Red');
   const displayedHand = isMyPlacementPhase ? ["Villager", ...currentHand] : currentHand;
 
-  // Determine display orientation
   const isRedTurn = gameState.currentPlayer === 'Red';
   const displayBoard = isRedTurn 
     ? [...gameState.board].reverse().map(row => [...row].reverse()) 
@@ -430,7 +423,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-background overflow-hidden">
-      <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 relative min-h-0">
+      <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 relative min-h-0 bg-[#1a161e]">
         <div className="absolute top-4 left-4 lg:top-8 lg:left-8 flex items-center gap-2 z-10">
           <Badge variant="outline" className={cn(
             "px-2 py-1 lg:px-4 lg:py-2 text-sm lg:text-lg transition-colors",
@@ -458,15 +451,12 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           </div>
         )}
 
-        {/* Board Container with Labels */}
         <div className="relative flex flex-col items-center">
-            {/* Top Column Labels */}
             <div className="flex w-[min(90vw,65vh)] justify-around px-1 mb-1">
                 {displayColLabels.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 uppercase tracking-tighter w-full text-center">{l}</span>)}
             </div>
             
             <div className="flex items-center">
-                {/* Left Row Labels */}
                 <div className="flex flex-col h-[min(112.5vw,81.25vh)] justify-around pr-1 md:pr-2">
                     {displayRowLabels.map((l, i) => <span key={`left-${i}`} className="text-[10px] md:text-xs font-headline text-white/30 w-4 text-right">{l}</span>)}
                 </div>
@@ -489,20 +479,19 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
                     </div>
                 </div>
 
-                {/* Right Row Labels */}
                 <div className="flex flex-col h-[min(112.5vw,81.25vh)] justify-around pl-1 md:pl-2">
                     {displayRowLabels.map((l, i) => <span key={`right-${i}`} className="text-[10px] md:text-xs font-headline text-white/30 w-4">{l}</span>)}
                 </div>
             </div>
 
-            {/* Bottom Column Labels */}
             <div className="flex w-[min(90vw,65vh)] justify-around px-1 mt-1">
                 {displayColLabels.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 uppercase tracking-tighter w-full text-center">{l}</span>)}
             </div>
         </div>
       </div>
 
-      <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/50 backdrop-blur-xl flex flex-col overflow-hidden h-[35vh] lg:h-screen">
+      {/* Sidebar - Vertically Scalable Container */}
+      <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/50 backdrop-blur-xl flex flex-col overflow-hidden h-[45vh] lg:h-screen">
         <div className="p-4 lg:p-6 border-b border-white/5 bg-primary/5 shrink-0">
           <div className="flex justify-between items-end mb-2 lg:mb-4">
             <div>
@@ -531,14 +520,16 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <ScrollArea className="flex-1 p-4 lg:p-6">
-            <div className="space-y-4 lg:space-y-6">
+        {/* Scalable Content Area */}
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+          <ScrollArea className="flex-1">
+            <div className="p-4 lg:p-6 space-y-6">
+              {/* Hand Section */}
               <div>
-                <h3 className="text-[10px] uppercase tracking-widest text-white/40 mb-2 lg:mb-3">
+                <h3 className="text-[10px] uppercase tracking-widest text-white/40 mb-3">
                   {gameState.currentPlayer} Hand
                 </h3>
-                <div className="grid grid-cols-2 lg:grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {displayedHand.map((type, i) => (
                     <Card 
                       key={`${type}-${i}`} 
@@ -560,7 +551,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
                     >
                       <CardContent className="p-2 lg:p-3">
                         <div className="flex items-center gap-2">
-                          <MinionIcon type={type} className="w-3 h-3 lg:w-4 lg:h-4 text-primary" />
+                          <MinionIcon type={type} className="w-4 h-4 text-primary" />
                           <div className="flex-1 overflow-hidden">
                             <p className="text-[9px] text-primary/80 font-bold">{getMinionData(type).cost} Mana</p>
                             <p className="text-[10px] lg:text-xs font-medium truncate">{type}</p>
@@ -572,9 +563,10 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
                 </div>
               </div>
 
+              {/* Battle Logs Section */}
               <div>
-                <h3 className="text-[10px] uppercase tracking-widest text-white/40 mb-2 lg:mb-3">Battle Logs</h3>
-                <div className="space-y-1.5 lg:space-y-2">
+                <h3 className="text-[10px] uppercase tracking-widest text-white/40 mb-3">Battle Logs</h3>
+                <div className="space-y-2">
                   {gameState.logs.map((msg, i) => (
                     <div key={i} className="text-[10px] lg:text-xs border-l-2 border-primary/20 pl-3 py-1 text-muted-foreground animate-in slide-in-from-left-2">
                       {msg}
@@ -587,15 +579,13 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         </div>
 
         <div className="p-4 lg:p-6 border-t border-white/5 bg-zinc-950 shrink-0">
-          <div className="grid grid-cols-1 gap-3">
-            <Button 
-              className="w-full bg-primary hover:bg-primary/80 h-10 lg:h-12 text-sm lg:text-md font-headline"
-              onClick={endTurn}
-              disabled={placementPhase !== 'done'}
-            >
-              End Turn
-            </Button>
-          </div>
+          <Button 
+            className="w-full bg-primary hover:bg-primary/80 h-10 lg:h-12 text-sm lg:text-md font-headline"
+            onClick={endTurn}
+            disabled={placementPhase !== 'done'}
+          >
+            End Turn
+          </Button>
         </div>
       </div>
     </div>

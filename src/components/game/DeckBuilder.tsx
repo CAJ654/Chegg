@@ -15,7 +15,6 @@ export function DeckBuilder({ playerColor, onComplete }: DeckBuilderProps) {
   const [deck, setDeck] = useState<string[]>(["Villager"]);
 
   const addToDeck = (type: string) => {
-    // Safety check: Don't allow more than 1 Villager and check deck size
     if (type === "Villager" && deck.includes("Villager")) return;
     
     if (deck.length < DECK_SIZE) {
@@ -24,7 +23,7 @@ export function DeckBuilder({ playerColor, onComplete }: DeckBuilderProps) {
   };
 
   const removeFromDeck = (index: number) => {
-    if (deck[index] === "Villager") return; // Cannot remove king
+    if (deck[index] === "Villager") return;
     const newDeck = [...deck];
     newDeck.splice(index, 1);
     setDeck(newDeck);
@@ -66,13 +65,13 @@ export function DeckBuilder({ playerColor, onComplete }: DeckBuilderProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 flex-1 min-h-0 overflow-hidden mb-4">
         {/* Minion Catalog */}
-        <Card className="lg:col-span-2 flex flex-col min-h-0 border-white/10 bg-card/50 backdrop-blur-sm overflow-hidden order-2 lg:order-1">
+        <Card className="lg:col-span-2 flex flex-col h-full border-white/10 bg-card/50 backdrop-blur-sm overflow-hidden order-2 lg:order-1">
           <CardHeader className="py-4 shrink-0">
             <CardTitle className="text-xl">Available Units</CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 min-h-0 p-0 overflow-hidden">
-            <ScrollArea className="h-full px-4 md:px-6 pb-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-4">
+          <CardContent className="flex-1 min-h-0 p-0">
+            <ScrollArea className="h-full px-4 md:px-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-6">
                 {MINION_MASTER_LIST.filter(m => m.type !== "Villager").map(minion => (
                   <div 
                     key={minion.type}
@@ -111,9 +110,9 @@ export function DeckBuilder({ playerColor, onComplete }: DeckBuilderProps) {
           </CardContent>
         </Card>
 
-        {/* Current Deck */}
+        {/* Current Deck - Vertically Scalable */}
         <Card className={cn(
-          "flex flex-col min-h-0 bg-card/50 backdrop-blur-sm overflow-hidden order-1 lg:order-2 h-[300px] lg:h-auto",
+          "flex flex-col h-full bg-card/50 backdrop-blur-sm overflow-hidden order-1 lg:order-2",
           playerColor === 'Blue' ? "border-blue-500/20" : "border-red-500/20"
         )}>
           <CardHeader className="py-4 shrink-0">
@@ -127,9 +126,9 @@ export function DeckBuilder({ playerColor, onComplete }: DeckBuilderProps) {
               </span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 min-h-0 p-0 overflow-hidden">
-            <ScrollArea className="h-full px-4 md:px-6 pb-6">
-              <div className="space-y-2 pb-4">
+          <CardContent className="flex-1 min-h-0 p-0">
+            <ScrollArea className="h-full px-4 md:px-6">
+              <div className="space-y-2 pb-6">
                 {deck.map((type, i) => (
                   <div key={`${type}-${i}`} className="flex items-center justify-between p-2 md:p-3 rounded-lg bg-zinc-900/40 border border-white/5 group hover:border-white/20 transition-colors">
                     <div className="flex items-center gap-3">
