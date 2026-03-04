@@ -422,8 +422,11 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
   // Determine display orientation
   const isRedTurn = gameState.currentPlayer === 'Red';
-  const displayBoard = isRedTurn ? [...gameState.board].reverse() : gameState.board;
+  const displayBoard = isRedTurn 
+    ? [...gameState.board].reverse().map(row => [...row].reverse()) 
+    : gameState.board;
   const displayRowLabels = isRedTurn ? [...ROW_LABELS].reverse() : ROW_LABELS;
+  const displayColLabels = isRedTurn ? [...COL_LABELS].reverse() : COL_LABELS;
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-background overflow-hidden">
@@ -459,7 +462,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         <div className="relative flex flex-col items-center">
             {/* Top Column Labels */}
             <div className="flex w-[min(90vw,65vh)] justify-around px-1 mb-1">
-                {COL_LABELS.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 uppercase tracking-tighter w-full text-center">{l}</span>)}
+                {displayColLabels.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 uppercase tracking-tighter w-full text-center">{l}</span>)}
             </div>
             
             <div className="flex items-center">
@@ -470,16 +473,16 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
                 <div className="relative bg-zinc-900/50 p-1 md:p-2 rounded-xl border border-white/10 shadow-2xl max-w-full">
                     <div className="game-board w-[min(90vw,65vh)] h-[min(112.5vw,81.25vh)] shadow-2xl">
-                        {displayBoard.map((row, displayY) => {
-                          return row.map((cell, x) => (
+                        {displayBoard.map((row) => {
+                          return row.map((cell) => (
                               <BoardTile 
-                              key={`${x}-${cell.y}`} 
+                              key={`${cell.x}-${cell.y}`} 
                               cell={cell} 
-                              isSelected={selectedTile?.x === x && selectedTile?.y === cell.y}
-                              isValidMove={validActions.some(a => a.x === x && a.y === cell.y && a.type === 'move')}
-                              isValidAttack={validActions.some(a => a.x === x && a.y === cell.y && a.type === 'attack')}
-                              isValidSpawn={validActions.some(a => a.x === x && a.y === cell.y && a.type === 'spawn')}
-                              onClick={() => handleTileClick(x, cell.y)}
+                              isSelected={selectedTile?.x === cell.x && selectedTile?.y === cell.y}
+                              isValidMove={validActions.some(a => a.x === cell.x && a.y === cell.y && a.type === 'move')}
+                              isValidAttack={validActions.some(a => a.x === cell.x && a.y === cell.y && a.type === 'attack')}
+                              isValidSpawn={validActions.some(a => a.x === cell.x && a.y === cell.y && a.type === 'spawn')}
+                              onClick={() => handleTileClick(cell.x, cell.y)}
                               />
                           ))
                         })}
@@ -494,7 +497,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
             {/* Bottom Column Labels */}
             <div className="flex w-[min(90vw,65vh)] justify-around px-1 mt-1">
-                {COL_LABELS.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 uppercase tracking-tighter w-full text-center">{l}</span>)}
+                {displayColLabels.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 uppercase tracking-tighter w-full text-center">{l}</span>)}
             </div>
         </div>
       </div>
