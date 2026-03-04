@@ -1,14 +1,14 @@
+
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { GameState, BoardCell, MinionInstance, ActionType } from "@/lib/game-types";
 import { createInitialState, getValidMoves, getValidAttacks, getMinionData } from "@/lib/game-logic";
 import { BoardTile } from "./BoardTile";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { MinionIcon } from "./MinionIcon";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { aiOpponentGameplay } from "@/ai/flows/ai-opponent-gameplay";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -18,14 +18,13 @@ interface CheggGameProps {
 }
 
 export function CheggGame({ playerDeck }: CheggGameProps) {
-  // Setup AI deck - for simplicity we use player's deck mirror or a default
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [selectedTile, setSelectedTile] = useState<{ x: number, y: number } | null>(null);
   const [validActions, setValidActions] = useState<{ x: number, y: number, type: ActionType }[]>([]);
   const [isPlacingVillager, setIsPlacingVillager] = useState(true);
+  const aiThinkingRef = useRef(false);
 
   useEffect(() => {
-    // Generate AI deck
     const aiDeck = [...playerDeck].sort(() => Math.random() - 0.5);
     setGameState(createInitialState(playerDeck, aiDeck));
   }, [playerDeck]);
@@ -37,10 +36,9 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     } : null);
   }, []);
 
-  const endTurn = useCallback(async () => {
+  const endTurn = useCallback(() => {
     if (!gameState) return;
     
-    // Switch to AI or Opponent
     const nextPlayer = gameState.currentPlayer === 'Blue' ? 'Red' : 'Blue';
     const nextMaxMana = Math.min(6, gameState.turnNumber + 1);
     
@@ -78,7 +76,18 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     log(`Turn ended. It is now ${nextPlayer}'s turn.`);
   }, [gameState, log]);
 
-  // Handle tile click
+  // Basic Scripted AI: Just ends turn after a delay
+  useEffect(() => {
+    if (gameState?.isAITurn && !gameState.winner && !aiThinkingRef.current) {
+      aiThinkingRef.current = true;
+      const timer = setTimeout(() => {
+        endTurn();
+        aiThinkingRef.current = false;
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState?.isAITurn, gameState?.winner, endTurn]);
+
   const handleTileClick = (x: number, y: number) => {
     if (!gameState || gameState.winner || gameState.isAITurn) return;
 
@@ -86,7 +95,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
       if (y > 7 && !gameState.board[y][x].minion) {
         setGameState(prev => {
           if (!prev) return null;
-          const newBoard = [...prev.board];
+          const newBoard = prev.board.map(row => row.map(cell => ({ ...cell })));
           newBoard[y][x] = {
             ...newBoard[y][x],
             minion: {
@@ -101,7 +110,6 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
               hasDashedThisTurn: false
             }
           };
-          // Place AI villager too
           const aiX = Math.floor(Math.random() * 8);
           const aiY = Math.floor(Math.random() * 2);
           newBoard[aiY][aiX] = {
@@ -126,14 +134,12 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
       return;
     }
 
-    // Is it a target of a valid action?
     const action = validActions.find(a => a.x === x && a.y === y);
     if (action && selectedTile) {
       executeAction(selectedTile.x, selectedTile.y, x, y, action.type);
       return;
     }
 
-    // Select a minion
     const cell = gameState.board[y][x];
     if (cell.minion && cell.minion.owner === gameState.currentPlayer) {
       setSelectedTile({ x, y });
@@ -171,10 +177,9 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
         const target = newBoard[toY][toX].minion;
         if (target) {
           if (target.isVillager) {
-            // End Game!
             return { ...prev, winner: prev.currentPlayer, board: newBoard };
           }
-          newBoard[toY][toX].minion = null; // Basic 1-hit kill
+          newBoard[toY][toX].minion = null;
         }
       }
 
@@ -193,7 +198,6 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
     const data = getMinionData(type);
     if (gameState.currentMana < data.cost) return;
 
-    // Open spawn tiles
     const spawns: { x: number, y: number, type: ActionType }[] = [];
     for (let y = 8; y < 10; y++) {
       for (let x = 0; x < 8; x++) {
@@ -201,14 +205,13 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
       }
     }
     setValidActions(spawns);
-    setSelectedTile(null); // Clear selection when spawning
+    setSelectedTile(null);
   };
 
   if (!gameState) return <div className="p-20 text-center">Loading battlefield...</div>;
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Game Board Column */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 relative">
         <div className="absolute top-8 left-8 flex items-center gap-4">
           <Badge variant="outline" className="border-primary/40 bg-primary/5 text-primary-foreground px-4 py-2 text-lg">
@@ -245,7 +248,6 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
         </div>
       </div>
 
-      {/* Sidebar Controls */}
       <div className="w-[380px] border-l border-white/5 bg-zinc-950/50 backdrop-blur-xl flex flex-col overflow-hidden">
         <div className="p-6 border-b border-white/5 bg-primary/5">
           <div className="flex justify-between items-end mb-4">
@@ -338,7 +340,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
           {gameState.isAITurn && (
             <div className="mt-4 flex items-center justify-center gap-3 text-sm text-primary animate-pulse">
               <div className="w-2 h-2 bg-primary rounded-full" />
-              AI Opponent is thinking...
+              Opponent is thinking...
             </div>
           )}
         </div>
