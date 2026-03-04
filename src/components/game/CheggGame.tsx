@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -211,26 +210,26 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
   if (!gameState) return <div className="p-20 text-center">Loading battlefield...</div>;
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      <div className="flex-1 flex flex-col items-center justify-center p-4 relative">
-        <div className="absolute top-8 left-8 flex items-center gap-4">
-          <Badge variant="outline" className="border-primary/40 bg-primary/5 text-primary-foreground px-4 py-2 text-lg">
+    <div className="flex flex-col lg:flex-row h-screen bg-background overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 relative min-h-0">
+        <div className="absolute top-4 left-4 lg:top-8 lg:left-8 flex items-center gap-2 z-10">
+          <Badge variant="outline" className="border-primary/40 bg-primary/5 text-primary-foreground px-2 py-1 lg:px-4 lg:py-2 text-sm lg:text-lg">
             Turn {gameState.turnNumber} • {gameState.currentPlayer} Player
           </Badge>
         </div>
 
         {gameState.winner && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
-            <div className="text-center p-10 bg-zinc-900 border border-primary/50 rounded-2xl shadow-2xl animate-in zoom-in-95">
-              <h1 className="text-6xl font-headline mb-4 text-primary">{gameState.winner} Wins!</h1>
-              <p className="text-xl text-muted-foreground mb-8">The kingdom has fallen. A new master rises.</p>
+            <div className="text-center p-6 md:p-10 bg-zinc-900 border border-primary/50 rounded-2xl shadow-2xl animate-in zoom-in-95 mx-4">
+              <h1 className="text-4xl md:text-6xl font-headline mb-4 text-primary">{gameState.winner} Wins!</h1>
+              <p className="text-base md:text-xl text-muted-foreground mb-8">The kingdom has fallen. A new master rises.</p>
               <Button size="lg" onClick={() => window.location.reload()}>Play Again</Button>
             </div>
           </div>
         )}
 
-        <div className="relative bg-zinc-900/50 p-2 rounded-xl border border-white/10 shadow-2xl">
-          <div className="game-board w-[min(80vh,80vw)] h-[min(100vh,100vw)] max-w-[600px] max-h-[750px] shadow-2xl">
+        <div className="relative bg-zinc-900/50 p-1 md:p-2 rounded-xl border border-white/10 shadow-2xl max-w-full">
+          <div className="game-board w-[min(90vw,65vh)] h-[min(112.5vw,81.25vh)] shadow-2xl">
             {gameState.board.map((row, y) => 
               row.map((cell, x) => (
                 <BoardTile 
@@ -248,15 +247,15 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
         </div>
       </div>
 
-      <div className="w-[380px] border-l border-white/5 bg-zinc-950/50 backdrop-blur-xl flex flex-col overflow-hidden">
-        <div className="p-6 border-b border-white/5 bg-primary/5">
-          <div className="flex justify-between items-end mb-4">
+      <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/50 backdrop-blur-xl flex flex-col overflow-hidden h-[35vh] lg:h-screen">
+        <div className="p-4 lg:p-6 border-b border-white/5 bg-primary/5 shrink-0">
+          <div className="flex justify-between items-end mb-2 lg:mb-4">
             <div>
-              <p className="text-xs uppercase tracking-widest text-white/40 mb-1">Arcane Resources</p>
-              <h2 className="text-4xl font-headline text-primary">{gameState.currentMana} / {gameState.maxManaCapacity} Mana</h2>
+              <p className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Arcane Resources</p>
+              <h2 className="text-2xl lg:text-4xl font-headline text-primary">{gameState.currentMana} / {gameState.maxManaCapacity} Mana</h2>
             </div>
             <div className="text-right">
-              <Badge variant="secondary" className="mb-1">{gameState.currentPlayer}</Badge>
+              <Badge variant="secondary" className="mb-1 text-[10px]">{gameState.currentPlayer}</Badge>
             </div>
           </div>
           <div className="flex gap-1">
@@ -264,7 +263,7 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
               <div 
                 key={i} 
                 className={cn(
-                  "h-2 flex-1 rounded-full transition-all duration-300",
+                  "h-1.5 lg:h-2 flex-1 rounded-full transition-all duration-300",
                   i < gameState.maxManaCapacity 
                     ? (i < gameState.currentMana ? "bg-primary shadow-[0_0_8px_rgba(117,31,189,0.5)]" : "bg-primary/20") 
                     : "bg-white/5"
@@ -275,11 +274,11 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col">
-          <ScrollArea className="flex-1 p-6">
-            <div className="space-y-6">
+          <ScrollArea className="flex-1 p-4 lg:p-6">
+            <div className="space-y-4 lg:space-y-6">
               <div>
-                <h3 className="text-xs uppercase tracking-widest text-white/40 mb-3">Minions in Hand</h3>
-                <div className="grid grid-cols-2 gap-2">
+                <h3 className="text-[10px] uppercase tracking-widest text-white/40 mb-2 lg:mb-3">Minions in Hand</h3>
+                <div className="grid grid-cols-2 lg:grid-cols-2 gap-2">
                   {gameState.playerHand.map((type, i) => (
                     <Card 
                       key={`${type}-${i}`} 
@@ -289,12 +288,12 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
                       )}
                       onClick={() => spawnMinion(type)}
                     >
-                      <CardContent className="p-3">
+                      <CardContent className="p-2 lg:p-3">
                         <div className="flex items-center gap-2">
-                          <MinionIcon type={type} className="w-4 h-4 text-primary" />
+                          <MinionIcon type={type} className="w-3 h-3 lg:w-4 lg:h-4 text-primary" />
                           <div className="flex-1 overflow-hidden">
-                            <p className="text-[10px] text-primary/80 font-bold">{getMinionData(type).cost} Mana</p>
-                            <p className="text-xs font-medium truncate">{type}</p>
+                            <p className="text-[9px] text-primary/80 font-bold">{getMinionData(type).cost} Mana</p>
+                            <p className="text-[10px] lg:text-xs font-medium truncate">{type}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -304,10 +303,10 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
               </div>
 
               <div>
-                <h3 className="text-xs uppercase tracking-widest text-white/40 mb-3">Battle Records</h3>
-                <div className="space-y-2">
+                <h3 className="text-[10px] uppercase tracking-widest text-white/40 mb-2 lg:mb-3">Battle Records</h3>
+                <div className="space-y-1.5 lg:space-y-2">
                   {gameState.logs.map((log, i) => (
-                    <div key={i} className="text-xs border-l-2 border-primary/20 pl-3 py-1 text-muted-foreground animate-in slide-in-from-left-2">
+                    <div key={i} className="text-[10px] lg:text-xs border-l-2 border-primary/20 pl-3 py-1 text-muted-foreground animate-in slide-in-from-left-2">
                       {log}
                     </div>
                   ))}
@@ -317,10 +316,10 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
           </ScrollArea>
         </div>
 
-        <div className="p-6 border-t border-white/5 bg-zinc-950">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="p-4 lg:p-6 border-t border-white/5 bg-zinc-950 shrink-0">
+          <div className="grid grid-cols-2 gap-3 lg:gap-4">
             <Button 
-              className="w-full bg-primary hover:bg-primary/80 h-12 text-md font-headline"
+              className="w-full bg-primary hover:bg-primary/80 h-10 lg:h-12 text-sm lg:text-md font-headline"
               onClick={endTurn}
               disabled={gameState.isAITurn}
             >
@@ -328,9 +327,9 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
             </Button>
             <Button 
               variant="outline" 
-              className="w-full h-12 font-headline"
+              className="w-full h-10 lg:h-12 text-sm font-headline"
               onClick={() => {
-                const instructions = "Objective: Capture the Blue Villager. Use mana efficiently. Red minions are yours.";
+                const instructions = "Objective: Capture the Red Villager. Use mana efficiently. Blue minions are yours.";
                 toast({ title: "Rules Reminder", description: instructions });
               }}
             >
@@ -338,8 +337,8 @@ export function CheggGame({ playerDeck }: CheggGameProps) {
             </Button>
           </div>
           {gameState.isAITurn && (
-            <div className="mt-4 flex items-center justify-center gap-3 text-sm text-primary animate-pulse">
-              <div className="w-2 h-2 bg-primary rounded-full" />
+            <div className="mt-3 lg:mt-4 flex items-center justify-center gap-2 lg:gap-3 text-xs lg:text-sm text-primary animate-pulse">
+              <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 bg-primary rounded-full" />
               Opponent is thinking...
             </div>
           )}
