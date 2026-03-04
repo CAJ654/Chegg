@@ -111,7 +111,8 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
 }
 
 export function getValidAttacks(gameState: GameState, minion: MinionInstance, startX: number, startY: number, currentMana: number): { x: number, y: number }[] {
-  if (minion.hasSpawnSickness || minion.hasAttackedThisTurn || minion.hasDashedThisTurn) return [];
+  // Guard: Villagers cannot attack
+  if (minion.isVillager || minion.hasSpawnSickness || minion.hasAttackedThisTurn || minion.hasDashedThisTurn) return [];
   
   const attackCost = minion.type === "Wither" ? 2 : 1;
   if (currentMana < attackCost) return [];

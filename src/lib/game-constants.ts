@@ -11,7 +11,7 @@ export interface MinionData {
 }
 
 export const MINION_MASTER_LIST: MinionData[] = [
-  { type: "Villager", cost: 0, movementPattern: "8 surrounding squares", attackPattern: "8 surrounding squares", specialAbilities: "King: Losing this unit ends the game. First move costs 1 Mana; Dash costs 2.", hp: 1 },
+  { type: "Villager", cost: 0, movementPattern: "8 surrounding squares", attackPattern: "None", specialAbilities: "King: Losing this unit ends the game. Cannot attack. First move costs 1 Mana; Dash costs 2.", hp: 1 },
   { type: "Zombie", cost: 1, movementPattern: "3 squares forward", attackPattern: "4 lateral directions", specialAbilities: "Basic unit.", hp: 1 },
   { type: "Creeper", cost: 1, movementPattern: "8 surrounding squares", attackPattern: "8 surrounding squares", specialAbilities: "Detonate: Attack destroys everything in range and eliminates the Creeper.", hp: 1 },
   { type: "Pig", cost: 1, movementPattern: "8 surrounding squares", attackPattern: "None", specialAbilities: "Hoarder: Draw 1 minion on spawn and 1 on death.", hp: 1 },
