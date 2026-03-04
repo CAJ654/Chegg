@@ -16,12 +16,17 @@ export function createInitialState(playerDeck: string[], opponentDeck: string[])
     board.push(row);
   }
 
-  // Draw initial hands
-  const blueHand = playerDeck.slice(0, 3);
-  const blueDeck = playerDeck.slice(3);
+  // Filter out the Villager from the pool of cards used for hand and deck
+  // because the Villager is placed manually during the setup phase.
+  const bluePool = playerDeck.filter(m => m !== 'Villager');
+  const redPool = opponentDeck.filter(m => m !== 'Villager');
+
+  // Draw initial hands from the remaining 14 cards
+  const blueHand = bluePool.slice(0, 3);
+  const blueDeck = bluePool.slice(3);
   
-  const redHand = opponentDeck.slice(0, 3);
-  const redDeck = opponentDeck.slice(3);
+  const redHand = redPool.slice(0, 3);
+  const redDeck = redPool.slice(3);
 
   return {
     currentPlayer: 'Blue',
@@ -84,7 +89,7 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
     const dir = minion.owner === 'Blue' ? -1 : 1;
     for (let i = 1; i <= 3; i++) {
       const ny = startY + (dir * i);
-      if (checkTile(startX, ny)) moves.push({ x: startX, y: ny });
+      if (checkTile(startX, ny)) moves.push({ x: startX, ny });
       else break; 
     }
   } else if (data.movementPattern === "4 lateral directions") {
