@@ -18,6 +18,9 @@ interface CheggGameProps {
   redDeck: string[];
 }
 
+const COL_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+const ROW_LABELS = ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1'];
+
 export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [selectedTile, setSelectedTile] = useState<{ x: number, y: number } | null>(null);
@@ -60,10 +63,15 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     const isEndingRedTurn = gameState.currentPlayer === 'Red';
     const nextPlayer = isEndingRedTurn ? 'Blue' : 'Red';
     
+    // Only increment turn and mana when Red finishes (one full cycle)
     const nextTurnNumber = isEndingRedTurn ? gameState.turnNumber + 1 : gameState.turnNumber;
     const nextMaxMana = Math.min(6, nextTurnNumber);
     
-    setMaxManaCapacity(nextMaxMana);
+    if (isEndingRedTurn) {
+        setMaxManaCapacity(nextMaxMana);
+    }
+    
+    // Refresh mana for the next player
     setCurrentMana(nextMaxMana);
 
     setGameState(prev => {
@@ -221,7 +229,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
         newBoard[fromY][fromX].minion = null;
         newBoard[toY][toX].minion = updatedMinion;
-        log(`${prev.currentPlayer} ${updatedMinion.type} moved to (${toX}, ${toY}).`);
+        log(`${prev.currentPlayer} ${updatedMinion.type} moved to ${COL_LABELS[toX]}${ROW_LABELS[toY]}.`);
       } else if (type === 'attack') {
         updatedMinion.hasAttackedThisTurn = true;
         
@@ -266,9 +274,8 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         // Standard Attack
         const target = newBoard[toY][toX].minion;
         if (target) {
-          log(`${prev.currentPlayer} ${updatedMinion.type} attacked ${target.owner} ${target.type}.`);
+          log(`${prev.currentPlayer} ${updatedMinion.type} attacked ${target.owner} ${target.type} at ${COL_LABELS[toX]}${ROW_LABELS[toY]}.`);
           
-          // Handle Multi-HP Units (Wither)
           if (target.type === 'Wither') {
             const currentHP = target.currentHealth ?? 3;
             if (currentHP > 1) {
@@ -357,7 +364,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         hasDashedThisTurn: false
       };
 
-      log(`${prev.currentPlayer} summoned ${type} at (${x}, ${y}).`);
+      log(`${prev.currentPlayer} summoned ${type} at ${COL_LABELS[x]}${ROW_LABELS[y]}.`);
 
       return {
         ...prev,
@@ -407,22 +414,47 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           </div>
         )}
 
-        <div className="relative bg-zinc-900/50 p-1 md:p-2 rounded-xl border border-white/10 shadow-2xl max-w-full">
-          <div className="game-board w-[min(90vw,65vh)] h-[min(112.5vw,81.25vh)] shadow-2xl">
-            {gameState.board.map((row, y) => 
-              row.map((cell, x) => (
-                <BoardTile 
-                  key={`${x}-${y}`} 
-                  cell={cell} 
-                  isSelected={selectedTile?.x === x && selectedTile?.y === y}
-                  isValidMove={validActions.some(a => a.x === x && a.y === y && a.type === 'move')}
-                  isValidAttack={validActions.some(a => a.x === x && a.y === y && a.type === 'attack')}
-                  isValidSpawn={validActions.some(a => a.x === x && a.y === y && a.type === 'spawn')}
-                  onClick={() => handleTileClick(x, y)}
-                />
-              ))
-            )}
-          </div>
+        {/* Board Container with Labels */}
+        <div className="relative flex flex-col items-center">
+            {/* Top Column Labels */}
+            <div className="flex w-[min(90vw,65vh)] justify-around px-1 mb-1">
+                {COL_LABELS.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 uppercase tracking-tighter w-full text-center">{l}</span>)}
+            </div>
+            
+            <div className="flex items-center">
+                {/* Left Row Labels */}
+                <div className="flex flex-col h-[min(112.5vw,81.25vh)] justify-around pr-1 md:pr-2">
+                    {ROW_LABELS.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 w-4 text-right">{l}</span>)}
+                </div>
+
+                <div className="relative bg-zinc-900/50 p-1 md:p-2 rounded-xl border border-white/10 shadow-2xl max-w-full">
+                    <div className="game-board w-[min(90vw,65vh)] h-[min(112.5vw,81.25vh)] shadow-2xl">
+                        {gameState.board.map((row, y) => 
+                        row.map((cell, x) => (
+                            <BoardTile 
+                            key={`${x}-${y}`} 
+                            cell={cell} 
+                            isSelected={selectedTile?.x === x && selectedTile?.y === y}
+                            isValidMove={validActions.some(a => a.x === x && a.y === y && a.type === 'move')}
+                            isValidAttack={validActions.some(a => a.x === x && a.y === y && a.type === 'attack')}
+                            isValidSpawn={validActions.some(a => a.x === x && a.y === y && a.type === 'spawn')}
+                            onClick={() => handleTileClick(x, y)}
+                            />
+                        ))
+                        )}
+                    </div>
+                </div>
+
+                {/* Right Row Labels */}
+                <div className="flex flex-col h-[min(112.5vw,81.25vh)] justify-around pl-1 md:pl-2">
+                    {ROW_LABELS.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 w-4">{l}</span>)}
+                </div>
+            </div>
+
+            {/* Bottom Column Labels */}
+            <div className="flex w-[min(90vw,65vh)] justify-around px-1 mt-1">
+                {COL_LABELS.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 uppercase tracking-tighter w-full text-center">{l}</span>)}
+            </div>
         </div>
       </div>
 
