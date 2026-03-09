@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -79,7 +80,7 @@ export default function Home() {
                 <p className="text-xs md:text-sm text-muted-foreground">
                   Code made by CAJ654 - {" "}
                   <a 
-                    href="https://github.com/CAJ654" 
+                    href="https://github.com/CAJ654/Chegg" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
