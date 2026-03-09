@@ -74,7 +74,7 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
     return true;
   };
 
-  if (data.movementPattern === "8 surrounding squares") {
+  if (data.movementPattern === "8 surrounding squares" || data.movementPattern === "8 surrounding squares (Range 2)") {
     const directions = [
       { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
       { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
@@ -86,14 +86,14 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
       const ny = startY + d.dy;
       if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
 
-      // Slime Elastic Jump (Distance 2)
-      if (minion.type === "Slime") {
+      // Slime Elastic Jump or Phantom Ethereal Range (Distance 2)
+      if (minion.type === "Slime" || minion.type === "Phantom") {
         const nx2 = startX + d.dx * 2;
         const ny2 = startY + d.dy * 2;
         if (checkTile(nx2, ny2)) moves.push({ x: nx2, y: ny2 });
       }
     });
-  } else if (data.movementPattern === "2 lateral, 1 diagonal") {
+  } else if (data.movementPattern === "Lateral: 2, Diagonal: 1") {
     const directions = [
       { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
       { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
