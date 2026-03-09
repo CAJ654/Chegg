@@ -22,6 +22,14 @@ export function BoardTile({
   const isSpawnZoneRed = cell.y < 2;
   const isSpawnZoneBlue = cell.y > 7;
   
+  // A minion is considered "done" for the turn if it has spawn sickness, 
+  // has already attacked, or has already used its dash move.
+  const isMinionDone = cell.minion && (
+    cell.minion.hasSpawnSickness || 
+    cell.minion.hasAttackedThisTurn || 
+    cell.minion.hasDashedThisTurn
+  );
+  
   return (
     <div 
       onClick={onClick}
@@ -42,7 +50,7 @@ export function BoardTile({
           cell.minion.owner === 'Red' 
             ? "bg-red-700 border-2 border-red-400 text-white" 
             : "bg-blue-700 border-2 border-blue-400 text-white",
-          cell.minion.hasSpawnSickness && "opacity-60 grayscale",
+          isMinionDone && "opacity-60 grayscale",
           isSelected && "scale-110 rotate-3",
         )}>
           <MinionIcon type={cell.minion.type} className="w-6 h-6 drop-shadow-md" />
