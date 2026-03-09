@@ -179,7 +179,10 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       return;
     }
 
-    const action = validActions.find(a => a.x === x && a.y === y);
+    // Resolve ambiguous actions by prioritizing attacks (e.g., Iron Golem sweep on empty tile)
+    const action = validActions.find(a => a.x === x && a.y === y && a.type === 'attack') ||
+                   validActions.find(a => a.x === x && a.y === y);
+
     if (action) {
       if (action.type === 'spawn' && spawningMinion) {
         executeSpawn(x, y, spawningMinion);
