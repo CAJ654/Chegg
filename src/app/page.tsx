@@ -40,7 +40,7 @@ export default function Home() {
           </h1>
           
           <p className="text-lg md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200 px-4">
-            A strategic chess-inspired battleground where mana flow and minion positioning decide the fate of kingdoms.
+            CHEGG is a turn-based, deck-building strategy game designed to be played within the Video game Minecraft, now available to play on the web!
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center animate-in fade-in zoom-in-95 duration-1000 delay-500 px-4">
