@@ -93,7 +93,7 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
         if (checkTile(nx2, ny2)) moves.push({ x: nx2, y: ny2 });
       }
     });
-  } else if (data.movementPattern === "8 directions (Range 2 lateral / 1 diagonal)") {
+  } else if (data.movementPattern === "Lateral: 2, Diagonal: 1") {
     const directions = [
       { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
       { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
@@ -107,7 +107,7 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
       const n1y = startY + d.dy;
       if (checkTile(n1x, n1y)) moves.push({ x: n1x, y: n1y });
 
-      // Distance 2 (ONLY if lateral for Frog)
+      // Distance 2 (ONLY if lateral)
       if (!isDiagonal) {
         const n2x = startX + (d.dx * 2);
         const n2y = startY + (d.dy * 2);
@@ -307,23 +307,34 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
         if (gameState.board[ny][nx].minion) break; 
       }
     });
-  } else if (data.attackPattern === "Ranged (Line of Sight)") {
-    const dirs = [
-        { dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
-        { dx: 1, dy: 1 }, { dx: 1, dy: -1 }, { dx: -1, dy: 1 }, { dx: -1, dy: -1 }
-    ];
-    dirs.forEach(d => {
-        let nx = startX + d.dx;
-        let ny = startY + d.dy;
-        while (nx >= 0 && nx < BOARD_COLS && ny >= 0 && ny < BOARD_ROWS) {
-            if (checkEnemy(nx, ny)) {
-                targets.push({ x: nx, y: ny });
-                break;
-            }
-            if (gameState.board[ny][nx].minion) break;
-            nx += d.dx;
-            ny += d.dy;
-        }
+  } else if (data.attackPattern === "T-Shape Kinetic") {
+    const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
+    lats.forEach(d => {
+      const midX = startX + d.dx;
+      const midY = startY + d.dy;
+      
+      // Check if path is blocked at distance 1
+      if (midX >= 0 && midX < BOARD_COLS && midY >= 0 && midY < BOARD_ROWS) {
+          if (gameState.board[midY][midX].minion) return; // Blocked by any unit
+      } else {
+          return; // Off board
+      }
+
+      // Targets at distance 2 (T-shape head)
+      // Tip is (dx*2, dy*2), Arms are tip +/- perpendicular vector
+      const targetsInDir = [
+          { x: startX + d.dx * 2, y: startY + d.dy * 2 }, // Tip
+          { x: startX + d.dx * 2 + d.dy, y: startY + d.dy * 2 + d.dx }, // Arm 1
+          { x: startX + d.dx * 2 - d.dy, y: startY + d.dy * 2 - d.dx }  // Arm 2
+      ];
+
+      targetsInDir.forEach(t => {
+          if (checkEnemy(t.x, t.y)) {
+              if (!targets.some(existing => existing.x === t.x && existing.y === t.y)) {
+                targets.push(t);
+              }
+          }
+      });
     });
   } else if (data.attackPattern === "Move-to-attack" || data.attackPattern === "Move-to-attack (Range 2)") {
     const directions = [
