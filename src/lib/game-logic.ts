@@ -20,11 +20,9 @@ export function createInitialState(playerDeck: string[], opponentDeck: string[])
     board.push(row);
   }
 
-  // Filter out the Villager from the pool of cards used for hand and deck
   const bluePool = playerDeck.filter(m => m !== 'Villager');
   const redPool = opponentDeck.filter(m => m !== 'Villager');
 
-  // Draw initial hands
   const blueHand = bluePool.slice(0, 3);
   const blueDeck = bluePool.slice(3);
   
@@ -47,19 +45,15 @@ export function createInitialState(playerDeck: string[], opponentDeck: string[])
 
 export function getValidMoves(gameState: GameState, minion: MinionInstance, startX: number, startY: number, currentMana: number): { x: number, y: number }[] {
   if (minion.hasSpawnSickness || minion.hasAttackedThisTurn) return [];
-  
-  // Phantom can only move if it is currently on a dark tile
   if (minion.type === "Phantom" && !gameState.board[startY][startX].isDarkTile) return [];
 
   const moves: { x: number, y: number }[] = [];
   const data = getMinionData(minion.type);
   
-  // Rule: Villager first move costs 1 Mana
   if (!minion.hasMovedThisTurn && minion.isVillager && currentMana < 1) {
     return [];
   }
 
-  // Rule: Dash restriction
   if (minion.hasMovedThisTurn && !minion.hasDashedThisTurn) {
     const dashCost = minion.isVillager ? 2 : 1;
     if (currentMana < dashCost) return [];
@@ -81,12 +75,10 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
       { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
     ];
     directions.forEach(d => {
-      // Distance 1
       const nx = startX + d.dx;
       const ny = startY + d.dy;
       if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
 
-      // Slime Elastic Jump or Phantom Ethereal Range or Parrot Agile Range (Distance 2)
       if (minion.type === "Slime" || minion.type === "Phantom" || minion.type === "Parrot") {
         const nx2 = startX + d.dx * 2;
         const ny2 = startY + d.dy * 2;
@@ -101,20 +93,17 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
     ];
     directions.forEach(d => {
       const isDiagonal = d.dx !== 0 && d.dy !== 0;
-      
-      // Distance 1
       const n1x = startX + d.dx;
       const n1y = startY + d.dy;
       if (checkTile(n1x, n1y)) moves.push({ x: n1x, y: n1y });
 
-      // Distance 2 (ONLY if lateral)
       if (!isDiagonal) {
         const n2x = startX + (d.dx * 2);
         const n2y = startY + (d.dy * 2);
         if (checkTile(n2x, n2y)) moves.push({ x: n2x, y: n2y });
       }
     });
-  } else if (data.movementPattern === "3 squares forward") {
+  } else if (data.movementPattern === "3 squares forward only") {
     const dir = minion.owner === 'Blue' ? -1 : 1;
     const ny = startY + dir;
     [-1, 0, 1].forEach(dx => {
@@ -160,11 +149,9 @@ export function getValidAbilities(gameState: GameState, minion: MinionInstance, 
       while (nx >= 0 && nx < BOARD_COLS && ny >= 0 && ny < BOARD_ROWS) {
         const targetMinion = gameState.board[ny][nx].minion;
         if (targetMinion) {
-          // Rule: Enderman cannot swap with Villagers
           if (minion.type === 'Enderman' && targetMinion.isVillager) break;
-          
           targets.push({ x: nx, y: ny });
-          break; // Line of sight stops at first unit
+          break;
         }
         nx += d.dx;
         ny += d.dy;
@@ -177,8 +164,6 @@ export function getValidAbilities(gameState: GameState, minion: MinionInstance, 
 
 export function getValidAttacks(gameState: GameState, minion: MinionInstance, startX: number, startY: number, currentMana: number): { x: number, y: number }[] {
   if (minion.isVillager || minion.hasSpawnSickness || minion.hasAttackedThisTurn || minion.hasDashedThisTurn) return [];
-  
-  // Phantom can only attack if it is currently on a dark tile
   if (minion.type === "Phantom" && !gameState.board[startY][startX].isDarkTile) return [];
 
   const attackCost = minion.type === "Wither" ? 2 : 1;
@@ -194,12 +179,10 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
     return false;
   };
 
-  // Parrot Mimic Ability Implementation
   if (minion.type === "Parrot") {
     const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
     const neighborTypes = new Set<string>();
     
-    // Find all unique laterally adjacent minion types (excluding other Parrots to avoid loops)
     lats.forEach(d => {
       const nx = startX + d.dx;
       const ny = startY + d.dy;
@@ -211,7 +194,6 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
       }
     });
 
-    // Mimic the attack patterns of all identified neighbors
     neighborTypes.forEach(type => {
       const mockMinion: MinionInstance = { ...minion, type };
       const mimickedTargets = getValidAttacks(gameState, mockMinion, startX, startY, currentMana);
@@ -222,7 +204,6 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
       });
     });
     
-    // If mimicking unit type, return those targets
     if (neighborTypes.size > 0) return targets;
   }
 
@@ -266,7 +247,7 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
       for (let i = 1; i <= 3; i++) {
         const nx = startX + (d.dx * i);
         const ny = startY + (d.dy * i);
-        if (nx < 0 || nx >= BOARD_COLS || ny < 0 || ny >= BOARD_ROWS) break;
+        if (nx < 0 || nx >= BOARD_COLS && ny < 0 || ny >= BOARD_ROWS) break;
         if (checkEnemy(nx, ny)) {
             targets.push({ x: nx, y: ny });
             break; 
@@ -280,7 +261,7 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
       for (let i = 1; i <= 2; i++) {
         const nx = startX + (d.dx * i);
         const ny = startY + (d.dy * i);
-        if (nx < 0 || nx >= BOARD_COLS || ny < 0 || ny >= BOARD_ROWS) break;
+        if (nx < 0 || nx >= BOARD_COLS && ny < 0 || ny >= BOARD_ROWS) break;
         if (checkEnemy(nx, ny)) {
             targets.push({ x: nx, y: ny });
             break;
@@ -294,7 +275,7 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
       for (let i = 1; i <= 3; i++) {
         const nx = startX + (d.dx * i);
         const ny = startY + (d.dy * i);
-        if (nx < 0 || nx >= BOARD_COLS || ny < 0 || ny >= BOARD_ROWS) break;
+        if (nx < 0 || nx >= BOARD_COLS && ny < 0 || ny >= BOARD_ROWS) break;
         
         const sweep = d.dx === 0
             ? [{ x: nx - 1, y: ny }, { x: nx, y: ny }, { x: nx + 1, y: ny }]
@@ -317,14 +298,12 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
 
       const midCell = gameState.board[midY][midX];
       if (midCell.minion) {
-        // If there's an enemy at distance 1, it's the target and blocks range 2
         if (midCell.minion.owner !== minion.owner) {
           targets.push({ x: midX, y: midY });
         }
-        return; // Path is blocked for range 2
+        return;
       }
 
-      // If distance 1 is empty, check the T-head at distance 2
       const tip = { x: startX + d.dx * 2, y: startY + d.dy * 2 };
       const arm1 = { x: startX + d.dx * 2 + d.dy, y: startY + d.dy * 2 + d.dx };
       const arm2 = { x: startX + d.dx * 2 - d.dy, y: startY + d.dy * 2 - d.dx };
@@ -344,7 +323,6 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
       { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
     ];
     directions.forEach(d => {
-      // Distance 1
       const nx1 = startX + d.dx;
       const ny1 = startY + d.dy;
       if (checkEnemy(nx1, ny1)) {
@@ -353,7 +331,6 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
           }
       }
 
-      // Slime Elastic Move-to-attack or Phantom Move-to-attack (Distance 2)
       if (minion.type === "Slime" || minion.type === "Phantom") {
         const nx2 = startX + d.dx * 2;
         const ny2 = startY + d.dy * 2;
