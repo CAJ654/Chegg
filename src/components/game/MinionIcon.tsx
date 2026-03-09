@@ -49,8 +49,8 @@ export function MinionIcon({ type, className }: { type: string, className?: stri
           <rect x="4" y="8" width="8" height="4" fill="#E07A94" />
           <rect x="5" y="9" width="2" height="2" fill="#6B3A46" />
           <rect x="9" y="9" width="2" height="2" fill="#6B3A46" />
-          <rect x="3" y="6" width="2" height="2" fill="white" />
-          <rect x="11" y="6" width="2" height="2" fill="white" />
+          <rect x="3" y="6" width="2" height="2" fill="black" />
+          <rect x="11" y="6" width="2" height="2" fill="black" />
         </SvgWrapper>
       );
     case "Rabbit":
