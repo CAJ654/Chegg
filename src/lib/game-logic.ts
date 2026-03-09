@@ -17,11 +17,10 @@ export function createInitialState(playerDeck: string[], opponentDeck: string[])
   }
 
   // Filter out the Villager from the pool of cards used for hand and deck
-  // because the Villager is placed manually during the setup phase.
   const bluePool = playerDeck.filter(m => m !== 'Villager');
   const redPool = opponentDeck.filter(m => m !== 'Villager');
 
-  // Draw initial hands from the remaining 14 cards
+  // Draw initial hands
   const blueHand = bluePool.slice(0, 3);
   const blueDeck = bluePool.slice(3);
   
@@ -57,12 +56,11 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
     return [];
   }
 
-  // Rule: Dash restriction (second move costs 1, Villager costs 2)
+  // Rule: Dash restriction
   if (minion.hasMovedThisTurn && !minion.hasDashedThisTurn) {
     const dashCost = minion.isVillager ? 2 : 1;
     if (currentMana < dashCost) return [];
   } else if (minion.hasMovedThisTurn && minion.hasDashedThisTurn) {
-    // Already moved and dashed
     return [];
   }
 
@@ -93,12 +91,12 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
     directions.forEach(d => {
       const isDiagonal = d.dx !== 0 && d.dy !== 0;
       
-      // Distance 1 (Allowed for both)
+      // Distance 1
       const n1x = startX + d.dx;
       const n1y = startY + d.dy;
       if (checkTile(n1x, n1y)) moves.push({ x: n1x, y: n1y });
 
-      // Distance 2 (ONLY if lateral)
+      // Distance 2 (ONLY if lateral for Frog)
       if (!isDiagonal) {
         const n2x = startX + (d.dx * 2);
         const n2y = startY + (d.dy * 2);
@@ -138,8 +136,35 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
   return moves;
 }
 
+export function getValidAbilities(gameState: GameState, minion: MinionInstance, startX: number, startY: number, currentMana: number): { x: number, y: number }[] {
+  if (minion.hasSpawnSickness || minion.hasAttackedThisTurn || minion.hasDashedThisTurn || currentMana < 1) return [];
+
+  const targets: { x: number, y: number }[] = [];
+
+  if (minion.type === 'Frog' || minion.type === 'Enderman') {
+    const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
+    lats.forEach(d => {
+      let nx = startX + d.dx;
+      let ny = startY + d.dy;
+      while (nx >= 0 && nx < BOARD_COLS && ny >= 0 && ny < BOARD_ROWS) {
+        const targetMinion = gameState.board[ny][nx].minion;
+        if (targetMinion) {
+          // Rule: Enderman cannot swap with Villagers
+          if (minion.type === 'Enderman' && targetMinion.isVillager) break;
+          
+          targets.push({ x: nx, y: ny });
+          break; // Line of sight stops at first unit
+        }
+        nx += d.dx;
+        ny += d.dy;
+      }
+    });
+  }
+
+  return targets;
+}
+
 export function getValidAttacks(gameState: GameState, minion: MinionInstance, startX: number, startY: number, currentMana: number): { x: number, y: number }[] {
-  // Guard: Villagers cannot attack
   if (minion.isVillager || minion.hasSpawnSickness || minion.hasAttackedThisTurn || minion.hasDashedThisTurn) return [];
   
   const attackCost = minion.type === "Wither" ? 2 : 1;
@@ -165,8 +190,6 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
       if (checkEnemy(startX + d.dx, startY + d.dy)) targets.push({ x: startX + d.dx, y: startY + d.dy });
     });
   } else if (data.attackPattern === "3 adjacent lateral tiles") {
-    // Iron Golem sweep: hits a 3-tile arc. Clicking a lateral tile targets the sweep in that direction.
-    // If ANY of the 3 tiles in the sweep contain an enemy, the lateral tile is a valid attack target.
     const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
     lats.forEach(d => {
       const tx = startX + d.dx;
@@ -220,7 +243,6 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
       }
     });
   } else if (data.attackPattern === "3-tile lateral projectile") {
-    // Wither logic: target + lateral splash. If any tile in the impact zone hits an enemy, highlight the target tile.
     const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
     lats.forEach(d => {
       for (let i = 1; i <= 3; i++) {

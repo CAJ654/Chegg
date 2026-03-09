@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { GameState, MinionInstance, ActionType } from "@/lib/game-types";
-import { createInitialState, getValidMoves, getValidAttacks, getMinionData } from "@/lib/game-logic";
+import { createInitialState, getValidMoves, getValidAttacks, getValidAbilities, getMinionData } from "@/lib/game-logic";
 import { BoardTile } from "./BoardTile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -64,7 +64,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     const nextTurnNumber = isEndingRedTurn ? gameState.turnNumber + 1 : gameState.turnNumber;
     const nextMaxMana = Math.min(6, nextTurnNumber);
     
-    // Count cats for mana bonus
     let catBonus = 0;
     gameState.board.forEach(row => row.forEach(cell => {
       if (cell.minion && cell.minion.type === 'Cat' && cell.minion.owner === nextPlayer) {
@@ -179,8 +178,8 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       return;
     }
 
-    // Resolve ambiguous actions by prioritizing attacks (e.g., Iron Golem sweep on empty tile)
     const action = validActions.find(a => a.x === x && a.y === y && a.type === 'attack') ||
+                   validActions.find(a => a.x === x && a.y === y && a.type === 'useAbility') ||
                    validActions.find(a => a.x === x && a.y === y);
 
     if (action) {
@@ -198,7 +197,8 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       setSpawningMinion(null);
       const moves = getValidMoves(gameState, cell.minion, x, y, currentMana).map(m => ({ ...m, type: 'move' as ActionType }));
       const attacks = getValidAttacks(gameState, cell.minion, x, y, currentMana).map(a => ({ ...a, type: 'attack' as ActionType }));
-      setValidActions([...moves, ...attacks]);
+      const abilities = getValidAbilities(gameState, cell.minion, x, y, currentMana).map(ab => ({ ...ab, type: 'useAbility' as ActionType }));
+      setValidActions([...moves, ...attacks, ...abilities]);
     } else {
       setSelectedTile(null);
       setValidActions([]);
@@ -208,13 +208,15 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
   const executeAction = (fromX: number, fromY: number, toX: number, toY: number, type: ActionType) => {
     let manaRequired = 0;
-    const attacker = { ...gameState!.board[fromY][fromX].minion! };
+    const actor = { ...gameState!.board[fromY][fromX].minion! };
 
     if (type === 'move' || type === 'dash') {
-      const isDash = attacker.hasMovedThisTurn;
-      manaRequired = isDash ? (attacker.isVillager ? 2 : 1) : (attacker.isVillager ? 1 : 0);
+      const isDash = actor.hasMovedThisTurn;
+      manaRequired = isDash ? (actor.isVillager ? 2 : 1) : (actor.isVillager ? 1 : 0);
     } else if (type === 'attack') {
-      manaRequired = attacker.type === "Wither" ? 2 : 1;
+      manaRequired = actor.type === "Wither" ? 2 : 1;
+    } else if (type === 'useAbility') {
+      manaRequired = 1;
     }
 
     if (currentMana < manaRequired) {
@@ -240,7 +242,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         updatedMinion.hasMovedThisTurn = true;
         if (isDash) updatedMinion.hasDashedThisTurn = true;
 
-        // Rabbit Lucky Foot: Draw 1 minion if it jumps over any unit during its move.
         if (updatedMinion.type === 'Rabbit') {
           const dx = Math.abs(toX - fromX);
           const dy = Math.abs(toY - fromY);
@@ -265,7 +266,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       } else if (type === 'attack') {
         updatedMinion.hasAttackedThisTurn = true;
         
-        // Multi-hit/AoE logic
         let victims: { x: number, y: number }[] = [{ x: toX, y: toY }];
 
         if (updatedMinion.type === 'Creeper') {
@@ -288,9 +288,9 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             log(`${prev.currentPlayer} Iron Golem SWEEP!`);
             const dx = toX - fromX;
             const dy = toY - fromY;
-            if (dx === 0) { // Vertical attack
+            if (dx === 0) {
                 victims = [{ x: fromX - 1, y: toY }, { x: fromX, y: toY }, { x: fromX + 1, y: toY }];
-            } else { // Horizontal attack
+            } else {
                 victims = [{ x: toX, y: fromY - 1 }, { x: toX, y: fromY }, { x: toX, y: fromY + 1 }];
             }
         } else if (updatedMinion.type === 'Wither') {
@@ -302,6 +302,10 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             } else {
                 victims = [{ x: toX, y: toY - 1 }, { x: toX, y: toY }, { x: toX, y: toY + 1 }];
             }
+        } else if (updatedMinion.type === 'Shulker-Box') {
+            newBoard[fromY][fromX].minion = null;
+            newBoard[toY][toX].minion = updatedMinion;
+            log(`${prev.currentPlayer} Shulker-Box kinetic teleport!`);
         }
 
         let blueVillagerDead = false;
@@ -320,7 +324,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
               }
             }
 
-            // Pig Death Ability: Hoarder
             if (target.type === 'Pig') {
               if (target.owner === 'Blue' && newBlueDeck.length > 0) {
                 newBlueHand.push(newBlueDeck.shift()!);
@@ -345,8 +348,38 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         else if (blueVillagerDead && redVillagerDead) winner = prev.currentPlayer === 'Blue' ? 'Blue' : 'Red';
 
         return { ...prev, board: newBoard, winner, blueHand: newBlueHand, blueDeck: newBlueDeck, redHand: newRedHand, redDeck: newRedDeck };
+      } else if (type === 'useAbility') {
+        updatedMinion.hasAttackedThisTurn = true;
+        
+        if (updatedMinion.type === 'Frog') {
+          const victim = { ...newBoard[toY][toX].minion! };
+          const dx = fromX === toX ? 0 : (toX > fromX ? -1 : 1);
+          const dy = fromY === toY ? 0 : (toY > fromY ? -1 : 1);
+          
+          let lastX = toX;
+          let lastY = toY;
+          for (let i = 1; i <= 2; i++) {
+            const nextX = lastX + dx;
+            const nextY = lastY + dy;
+            if (nextX === fromX && nextY === fromY) break;
+            if (nextX < 0 || nextX >= 8 || nextY < 0 || nextY >= 10) break;
+            if (newBoard[nextY][nextX].minion) break;
+            lastX = nextX;
+            lastY = nextY;
+          }
+          
+          newBoard[toY][toX].minion = null;
+          newBoard[lastY][lastX].minion = victim;
+          log(`${prev.currentPlayer} Frog pulled ${victim.type} closer!`);
+        } else if (updatedMinion.type === 'Enderman') {
+          const targetMinion = { ...newBoard[toY][toX].minion! };
+          newBoard[fromY][fromX].minion = targetMinion;
+          newBoard[toY][toX].minion = updatedMinion;
+          log(`${prev.currentPlayer} Enderman swapped places with ${targetMinion.type}!`);
+        }
       }
 
+      newBoard[fromY][fromX].minion = updatedMinion;
       return { 
         ...prev, 
         board: newBoard,
@@ -437,7 +470,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
       log(`${prev.currentPlayer} summoned ${type} at ${COL_LABELS[x]}${ROW_LABELS[y]}.`);
 
-      // Pig Hoarder Spawn Ability: Draw 1 minion on spawn.
       if (type === 'Pig') {
         if (prev.currentPlayer === 'Blue' && newBlueDeck.length > 0) {
           newBlueHand.push(newBlueDeck.shift()!);
@@ -469,7 +501,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             if (victim) {
               log(`Storm destroyed ${victim.owner} ${victim.type}`);
 
-              // Pig Death Ability: Hoarder
               if (victim.type === 'Pig') {
                 if (victim.owner === 'Blue' && newBlueDeck.length > 0) {
                   newBlueHand.push(newBlueDeck.shift()!);
