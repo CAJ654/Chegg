@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -263,84 +262,86 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       } else if (type === 'attack') {
         updatedMinion.hasAttackedThisTurn = true;
         
+        // Multi-hit/AoE logic
+        let victims: { x: number, y: number }[] = [{ x: toX, y: toY }];
+
         if (updatedMinion.type === 'Creeper') {
           log(`${prev.currentPlayer} Creeper DETONATED!`);
-          newBoard[fromY][fromX].minion = null; 
-          
+          victims = [];
           const directions = [
             { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
             { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
             { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
           ];
+          directions.forEach(d => victims.push({ x: fromX + d.dx, y: fromY + d.dy }));
+          newBoard[fromY][fromX].minion = null;
+        } else if (updatedMinion.type === 'Puffer-Fish') {
+            log(`${prev.currentPlayer} Puffer-Fish SPIKES!`);
+            victims = [
+                { x: fromX - 1, y: fromY - 1 }, { x: fromX + 1, y: fromY - 1 },
+                { x: fromX - 1, y: fromY + 1 }, { x: fromX + 1, y: fromY + 1 }
+            ];
+        } else if (updatedMinion.type === 'Iron Golem') {
+            log(`${prev.currentPlayer} Iron Golem SWEEP!`);
+            const dx = toX - fromX;
+            const dy = toY - fromY;
+            if (dx === 0) { // Vertical attack
+                victims = [{ x: fromX - 1, y: toY }, { x: fromX, y: toY }, { x: fromX + 1, y: toY }];
+            } else { // Horizontal attack
+                victims = [{ x: toX, y: fromY - 1 }, { x: toX, y: fromY }, { x: toX, y: fromY + 1 }];
+            }
+        } else if (updatedMinion.type === 'Wither') {
+            log(`${prev.currentPlayer} Wither STORM PROJECTILE!`);
+            const dx = toX - fromX;
+            const dy = toY - fromY;
+            if (dx === 0) {
+                victims = [{ x: toX - 1, y: toY }, { x: toX, y: toY }, { x: toX + 1, y: toY }];
+            } else {
+                victims = [{ x: toX, y: toY - 1 }, { x: toX, y: toY }, { x: toX, y: toY + 1 }];
+            }
+        }
 
-          let blueVillagerDead = false;
-          let redVillagerDead = false;
+        let blueVillagerDead = false;
+        let redVillagerDead = false;
 
-          directions.forEach(d => {
-            const nx = fromX + d.dx;
-            const ny = fromY + d.dy;
-            if (nx >= 0 && nx < 8 && ny >= 0 && ny < 10) {
-              const victim = newBoard[ny][nx].minion;
-              if (victim) {
-                log(`Explosion destroyed ${victim.owner} ${victim.type}`);
-                
-                // Pig Death Ability: Hoarder
-                if (victim.type === 'Pig') {
-                  if (victim.owner === 'Blue' && newBlueDeck.length > 0) {
-                    newBlueHand.push(newBlueDeck.shift()!);
-                    log("Pig Death Hoarder (Explosion): Blue draws a card!");
-                  } else if (victim.owner === 'Red' && newRedDeck.length > 0) {
-                    newRedHand.push(newRedDeck.shift()!);
-                    log("Pig Death Hoarder (Explosion): Red draws a card!");
-                  }
-                }
-
-                if (victim.isVillager) {
-                  if (victim.owner === 'Blue') blueVillagerDead = true;
-                  else redVillagerDead = true;
-                }
-                newBoard[ny][nx].minion = null;
+        victims.forEach(v => {
+          if (v.x < 0 || v.x >= 8 || v.y < 0 || v.y >= 10) return;
+          const target = newBoard[v.y][v.x].minion;
+          if (target) {
+            if (target.type === 'Wither') {
+              const currentHP = target.currentHealth ?? 3;
+              if (currentHP > 1) {
+                newBoard[v.y][v.x].minion = { ...target, currentHealth: currentHP - 1 };
+                log(`Wither takes damage! ${currentHP - 1} HP remaining.`);
+                return;
               }
             }
-          });
 
-          let winner = prev.winner;
-          if (redVillagerDead && !blueVillagerDead) winner = 'Blue';
-          else if (blueVillagerDead && !redVillagerDead) winner = 'Red';
-          else if (blueVillagerDead && redVillagerDead) winner = prev.currentPlayer === 'Blue' ? 'Blue' : 'Red';
-
-          return { ...prev, board: newBoard, winner, blueHand: newBlueHand, blueDeck: newBlueDeck, redHand: newRedHand, redDeck: newRedDeck };
-        }
-
-        const target = newBoard[toY][toX].minion;
-        if (target) {
-          log(`${prev.currentPlayer} ${updatedMinion.type} attacked ${target.owner} ${target.type} at ${COL_LABELS[toX]}${ROW_LABELS[toY]}.`);
-          
-          if (target.type === 'Wither') {
-            const currentHP = target.currentHealth ?? 3;
-            if (currentHP > 1) {
-              newBoard[toY][toX].minion = { ...target, currentHealth: currentHP - 1 };
-              log(`Wither takes damage! ${currentHP - 1} HP remaining.`);
-              return { ...prev, board: newBoard, blueHand: newBlueHand, blueDeck: newBlueDeck, redHand: newRedHand, redDeck: newRedDeck };
+            // Pig Death Ability: Hoarder
+            if (target.type === 'Pig') {
+              if (target.owner === 'Blue' && newBlueDeck.length > 0) {
+                newBlueHand.push(newBlueDeck.shift()!);
+                log("Pig Death Hoarder: Blue draws a card!");
+              } else if (target.owner === 'Red' && newRedDeck.length > 0) {
+                newRedHand.push(newRedDeck.shift()!);
+                log("Pig Death Hoarder: Red draws a card!");
+              }
             }
-          }
 
-          // Pig Death Ability: Hoarder
-          if (target.type === 'Pig') {
-            if (target.owner === 'Blue' && newBlueDeck.length > 0) {
-              newBlueHand.push(newBlueDeck.shift()!);
-              log("Pig Death Hoarder: Blue draws a card!");
-            } else if (target.owner === 'Red' && newRedDeck.length > 0) {
-              newRedHand.push(newRedDeck.shift()!);
-              log("Pig Death Hoarder: Red draws a card!");
+            if (target.isVillager) {
+              if (target.owner === 'Blue') blueVillagerDead = true;
+              else redVillagerDead = true;
             }
+            newBoard[v.y][v.x].minion = null;
           }
+        });
 
-          if (target.isVillager) {
-            return { ...prev, winner: prev.currentPlayer, board: newBoard, blueHand: newBlueHand, blueDeck: newBlueDeck, redHand: newRedHand, redDeck: newRedDeck };
-          }
-          newBoard[toY][toX].minion = null;
-        }
+        let winner = prev.winner;
+        if (redVillagerDead && !blueVillagerDead) winner = 'Blue';
+        else if (blueVillagerDead && !redVillagerDead) winner = 'Red';
+        else if (blueVillagerDead && redVillagerDead) winner = prev.currentPlayer === 'Blue' ? 'Blue' : 'Red';
+
+        return { ...prev, board: newBoard, winner, blueHand: newBlueHand, blueDeck: newBlueDeck, redHand: newRedHand, redDeck: newRedDeck };
       }
 
       return { 

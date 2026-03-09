@@ -98,6 +98,13 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
       const ny = startY + d.dy;
       if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
     });
+  } else if (data.movementPattern === "4 diagonal directions") {
+    const diags = [{ dx: 1, dy: 1 }, { dx: 1, dy: -1 }, { dx: -1, dy: 1 }, { dx: -1, dy: -1 }];
+    diags.forEach(d => {
+      const nx = startX + d.dx;
+      const ny = startY + d.dy;
+      if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
+    });
   } else if (data.movementPattern === "2-tile lateral 'hop'") {
     const hops = [{ dx: 2, dy: 0 }, { dx: -2, dy: 0 }, { dx: 0, dy: 2 }, { dx: 0, dy: -2 }];
     hops.forEach(d => {
@@ -136,9 +143,14 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
     directions.forEach(d => {
       if (checkEnemy(startX + d.dx, startY + d.dy)) targets.push({ x: startX + d.dx, y: startY + d.dy });
     });
-  } else if (data.attackPattern === "4 lateral directions") {
+  } else if (data.attackPattern === "4 lateral directions" || data.attackPattern === "3 adjacent lateral tiles") {
     const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
     lats.forEach(d => {
+      if (checkEnemy(startX + d.dx, startY + d.dy)) targets.push({ x: startX + d.dx, y: startY + d.dy });
+    });
+  } else if (data.attackPattern === "4 diagonal squares") {
+    const diags = [{ dx: 1, dy: 1 }, { dx: 1, dy: -1 }, { dx: -1, dy: 1 }, { dx: -1, dy: -1 }];
+    diags.forEach(d => {
       if (checkEnemy(startX + d.dx, startY + d.dy)) targets.push({ x: startX + d.dx, y: startY + d.dy });
     });
   } else if (data.attackPattern === "3-tile diagonal range") {
@@ -151,7 +163,40 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
             targets.push({ x: nx, y: ny });
             break; // Blocked by first enemy hit
         }
+        if (gameState.board[ny] && gameState.board[ny][nx] && gameState.board[ny][nx].minion) break; // Blocked by any unit
       }
+    });
+  } else if (data.attackPattern === "2-tile lateral range" || data.attackPattern === "3-tile lateral projectile") {
+    const range = data.attackPattern.includes("3-tile") ? 3 : 2;
+    const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
+    lats.forEach(d => {
+      for (let i = 1; i <= range; i++) {
+        const nx = startX + (d.dx * i);
+        const ny = startY + (d.dy * i);
+        if (checkEnemy(nx, ny)) {
+            targets.push({ x: nx, y: ny });
+            break;
+        }
+        if (gameState.board[ny] && gameState.board[ny][nx] && gameState.board[ny][nx].minion) break;
+      }
+    });
+  } else if (data.attackPattern === "Ranged (Line of Sight)") {
+    const dirs = [
+        { dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
+        { dx: 1, dy: 1 }, { dx: 1, dy: -1 }, { dx: -1, dy: 1 }, { dx: -1, dy: -1 }
+    ];
+    dirs.forEach(d => {
+        let nx = startX + d.dx;
+        let ny = startY + d.dy;
+        while (nx >= 0 && nx < BOARD_COLS && ny >= 0 && ny < BOARD_ROWS) {
+            if (checkEnemy(nx, ny)) {
+                targets.push({ x: nx, y: ny });
+                break;
+            }
+            if (gameState.board[ny][nx].minion) break;
+            nx += d.dx;
+            ny += d.dy;
+        }
     });
   }
 
