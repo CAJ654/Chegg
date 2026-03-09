@@ -1,6 +1,10 @@
 import { MinionData, MINION_MASTER_LIST, BOARD_ROWS, BOARD_COLS } from "./game-constants";
 import { GameState, MinionInstance, BoardCell } from "./game-types";
 
+export function getMinionData(type: string): MinionData {
+  return MINION_MASTER_LIST.find(m => m.type === type)!;
+}
+
 export function createInitialState(playerDeck: string[], opponentDeck: string[]): GameState {
   const board: BoardCell[][] = [];
   for (let y = 0; y < BOARD_ROWS; y++) {
@@ -39,10 +43,6 @@ export function createInitialState(playerDeck: string[], opponentDeck: string[])
     winner: null,
     logs: ["Game Started. Turn 1. Blue's Turn."],
   };
-}
-
-export function getMinionData(type: string): MinionData {
-  return MINION_MASTER_LIST.find(m => m.type === type)!;
 }
 
 export function getValidMoves(gameState: GameState, minion: MinionInstance, startX: number, startY: number, currentMana: number): { x: number, y: number }[] {
@@ -313,27 +313,28 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
       const midX = startX + d.dx;
       const midY = startY + d.dy;
       
-      // Check if path is blocked at distance 1
-      if (midX >= 0 && midX < BOARD_COLS && midY >= 0 && midY < BOARD_ROWS) {
-          if (gameState.board[midY][midX].minion) return; // Blocked by any unit
-      } else {
-          return; // Off board
+      if (midX < 0 || midX >= BOARD_COLS || midY < 0 || midY >= BOARD_ROWS) return;
+
+      const midCell = gameState.board[midY][midX];
+      if (midCell.minion) {
+        // If there's an enemy at distance 1, it's the target and blocks range 2
+        if (midCell.minion.owner !== minion.owner) {
+          targets.push({ x: midX, y: midY });
+        }
+        return; // Path is blocked for range 2
       }
 
-      // Targets at distance 2 (T-shape head)
-      // Tip is (dx*2, dy*2), Arms are tip +/- perpendicular vector
-      const targetsInDir = [
-          { x: startX + d.dx * 2, y: startY + d.dy * 2 }, // Tip
-          { x: startX + d.dx * 2 + d.dy, y: startY + d.dy * 2 + d.dx }, // Arm 1
-          { x: startX + d.dx * 2 - d.dy, y: startY + d.dy * 2 - d.dx }  // Arm 2
-      ];
+      // If distance 1 is empty, check the T-head at distance 2
+      const tip = { x: startX + d.dx * 2, y: startY + d.dy * 2 };
+      const arm1 = { x: startX + d.dx * 2 + d.dy, y: startY + d.dy * 2 + d.dx };
+      const arm2 = { x: startX + d.dx * 2 - d.dy, y: startY + d.dy * 2 - d.dx };
 
-      targetsInDir.forEach(t => {
-          if (checkEnemy(t.x, t.y)) {
-              if (!targets.some(existing => existing.x === t.x && existing.y === t.y)) {
-                targets.push(t);
-              }
+      [tip, arm1, arm2].forEach(t => {
+        if (checkEnemy(t.x, t.y)) {
+          if (!targets.some(existing => existing.x === t.x && existing.y === t.y)) {
+            targets.push(t);
           }
+        }
       });
     });
   } else if (data.attackPattern === "Move-to-attack" || data.attackPattern === "Move-to-attack (Range 2)") {
