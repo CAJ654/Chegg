@@ -178,9 +178,13 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       return;
     }
 
-    const action = validActions.find(a => a.x === x && a.y === y && a.type === 'attack') ||
-                   validActions.find(a => a.x === x && a.y === y && a.type === 'useAbility') ||
-                   validActions.find(a => a.x === x && a.y === y);
+    const attackAction = validActions.find(a => a.x === x && a.y === y && a.type === 'attack');
+    const abilityAction = validActions.find(a => a.x === x && a.y === y && a.type === 'useAbility');
+    const moveAction = validActions.find(a => a.x === x && a.y === y && (a.type === 'move' || a.type === 'dash'));
+    const spawnAction = validActions.find(a => a.x === x && a.y === y && a.type === 'spawn');
+
+    // Prioritize actions: attack/ability > move > spawn
+    const action = attackAction || abilityAction || moveAction || spawnAction;
 
     if (action) {
       if (action.type === 'spawn' && spawningMinion) {
@@ -208,7 +212,9 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
   const executeAction = (fromX: number, fromY: number, toX: number, toY: number, type: ActionType) => {
     let manaRequired = 0;
-    const actor = { ...gameState!.board[fromY][fromX].minion! };
+    const sourceCell = gameState!.board[fromY][fromX];
+    if (!sourceCell.minion) return;
+    const actor = { ...sourceCell.minion };
 
     if (type === 'move' || type === 'dash') {
       const isDash = actor.hasMovedThisTurn;
@@ -305,7 +311,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             } else {
                 victims = [{ x: toX, y: toY - 1 }, { x: toX, y: toY }, { x: toX, y: toY + 1 }];
             }
-        } else if (updatedMinion.type === 'Shulker-Box' || updatedMinion.type === 'Slime') {
+        } else if (updatedMinion.type === 'Shulker-Box' || updatedMinion.type === 'Slime' || updatedMinion.type === 'Phantom') {
             newBoard[fromY][fromX].minion = null;
             newBoard[toY][toX].minion = updatedMinion;
             log(`${prev.currentPlayer} ${updatedMinion.type} kinetic strike!`);

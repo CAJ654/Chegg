@@ -93,7 +93,7 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
         if (checkTile(nx2, ny2)) moves.push({ x: nx2, y: ny2 });
       }
     });
-  } else if (data.movementPattern === "Lateral: 2, Diagonal: 1") {
+  } else if (data.movementPattern === "8 directions (Range 2 lateral / 1 diagonal)") {
     const directions = [
       { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
       { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
@@ -293,7 +293,7 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
             ny += d.dy;
         }
     });
-  } else if (data.attackPattern === "Move-to-attack") {
+  } else if (data.attackPattern === "Move-to-attack" || data.attackPattern === "Move-to-attack (Range 2)") {
     const directions = [
       { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
       { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
@@ -301,12 +301,22 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
     ];
     directions.forEach(d => {
       // Distance 1
-      if (checkEnemy(startX + d.dx, startY + d.dy)) targets.push({ x: startX + d.dx, y: startY + d.dy });
+      const nx1 = startX + d.dx;
+      const ny1 = startY + d.dy;
+      if (checkEnemy(nx1, ny1)) {
+          if (minion.type !== "Phantom" || gameState.board[ny1][nx1].isDarkTile) {
+            targets.push({ x: nx1, y: ny1 });
+          }
+      }
 
-      // Slime Elastic Move-to-attack (Distance 2)
-      if (minion.type === "Slime") {
-        if (checkEnemy(startX + d.dx * 2, startY + d.dy * 2)) {
-          targets.push({ x: startX + d.dx * 2, y: startY + d.dy * 2 });
+      // Slime Elastic Move-to-attack or Phantom Move-to-attack (Distance 2)
+      if (minion.type === "Slime" || minion.type === "Phantom") {
+        const nx2 = startX + d.dx * 2;
+        const ny2 = startY + d.dy * 2;
+        if (checkEnemy(nx2, ny2)) {
+          if (minion.type !== "Phantom" || gameState.board[ny2][nx2].isDarkTile) {
+            targets.push({ x: nx2, y: ny2 });
+          }
         }
       }
     });
