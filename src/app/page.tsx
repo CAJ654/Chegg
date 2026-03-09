@@ -5,7 +5,7 @@ import { useState } from "react";
 import { DeckBuilder } from "@/components/game/DeckBuilder";
 import { CheggGame } from "@/components/game/CheggGame";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, Sword, Zap } from "lucide-react";
+import { ShieldCheck, Sword, Zap, ExternalLink } from "lucide-react";
 
 export default function Home() {
   const [phase, setPhase] = useState<'landing' | 'deckBlue' | 'deckRed' | 'game'>('landing');
@@ -69,8 +69,18 @@ export default function Home() {
               <p className="text-xs md:text-sm text-muted-foreground">18 specialized units with distinct move and attack patterns.</p>
             </div>
             <div className="p-6 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-              <h3 className="text-primary font-headline text-lg md:text-xl mb-2">Tactical Depth</h3>
-              <p className="text-xs md:text-sm text-muted-foreground">Protect your Villager at all costs. Master both sides of the board.</p>
+              <h3 className="text-primary font-headline text-lg md:text-xl mb-2">Credits</h3>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Rules made by Gerg - {" "}
+                <a 
+                  href="https://youtube.com/@_gerg?si=nRy82bCPkNZAV9M_" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                >
+                  YouTube <ExternalLink className="w-3 h-3" />
+                </a>
+              </p>
             </div>
           </div>
         </main>
