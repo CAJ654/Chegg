@@ -64,17 +64,30 @@ export default function Home() {
             </div>
             <div className="p-6 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
               <h3 className="text-primary font-headline text-lg md:text-xl mb-2">Credits</h3>
-              <p className="text-xs md:text-sm text-muted-foreground">
-                Rules made by Gerg - {" "}
-                <a 
-                  href="https://youtube.com/@_gerg?si=nRy82bCPkNZAV9M_" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
-                >
-                  YouTube <ExternalLink className="w-3 h-3" />
-                </a>
-              </p>
+              <div className="space-y-1">
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  Rules made by Gerg - {" "}
+                  <a 
+                    href="https://youtube.com/@_gerg?si=nRy82bCPkNZAV9M_" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                  >
+                    YouTube <ExternalLink className="w-3 h-3" />
+                  </a>
+                </p>
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  Code made by CAJ654 - {" "}
+                  <a 
+                    href="https://github.com/CAJ654" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                  >
+                    Github <ExternalLink className="w-3 h-3" />
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
         </main>
