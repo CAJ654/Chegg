@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -236,6 +237,8 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       let newRedDeck = [...prev.redDeck];
 
       const updatedMinion = { ...newBoard[fromY][fromX].minion! };
+      let blueVillagerDead = false;
+      let redVillagerDead = false;
 
       if (type === 'move' || type === 'dash') {
         const isDash = updatedMinion.hasMovedThisTurn;
@@ -265,6 +268,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         log(`${prev.currentPlayer} ${updatedMinion.type} moved to ${COL_LABELS[toX]}${ROW_LABELS[toY]}.`);
       } else if (type === 'attack') {
         updatedMinion.hasAttackedThisTurn = true;
+        newBoard[fromY][fromX].minion = updatedMinion;
         
         let victims: { x: number, y: number }[] = [{ x: toX, y: toY }];
 
@@ -308,9 +312,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             log(`${prev.currentPlayer} Shulker-Box kinetic teleport!`);
         }
 
-        let blueVillagerDead = false;
-        let redVillagerDead = false;
-
         victims.forEach(v => {
           if (v.x < 0 || v.x >= 8 || v.y < 0 || v.y >= 10) return;
           const target = newBoard[v.y][v.x].minion;
@@ -341,15 +342,9 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             newBoard[v.y][v.x].minion = null;
           }
         });
-
-        let winner = prev.winner;
-        if (redVillagerDead && !blueVillagerDead) winner = 'Blue';
-        else if (blueVillagerDead && !redVillagerDead) winner = 'Red';
-        else if (blueVillagerDead && redVillagerDead) winner = prev.currentPlayer === 'Blue' ? 'Blue' : 'Red';
-
-        return { ...prev, board: newBoard, winner, blueHand: newBlueHand, blueDeck: newBlueDeck, redHand: newRedHand, redDeck: newRedDeck };
       } else if (type === 'useAbility') {
         updatedMinion.hasAttackedThisTurn = true;
+        newBoard[fromY][fromX].minion = updatedMinion;
         
         if (updatedMinion.type === 'Frog') {
           const victim = { ...newBoard[toY][toX].minion! };
@@ -379,10 +374,15 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         }
       }
 
-      newBoard[fromY][fromX].minion = updatedMinion;
+      let winner = prev.winner;
+      if (redVillagerDead && !blueVillagerDead) winner = 'Blue';
+      else if (blueVillagerDead && !redVillagerDead) winner = 'Red';
+      else if (blueVillagerDead && redVillagerDead) winner = prev.currentPlayer === 'Blue' ? 'Blue' : 'Red';
+
       return { 
         ...prev, 
         board: newBoard,
+        winner,
         blueHand: newBlueHand,
         blueDeck: newBlueDeck,
         redHand: newRedHand,
