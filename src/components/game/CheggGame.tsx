@@ -13,6 +13,10 @@ import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+/**
+ * Properties for the main Game component.
+ * Requires decks built during the Landing phase.
+ */
 interface CheggGameProps {
   blueDeck: string[];
   redDeck: string[];
@@ -21,7 +25,12 @@ interface CheggGameProps {
 const COL_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 const ROW_LABELS = ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1'];
 
+/**
+ * The primary controller and view for the CHEGG game arena.
+ * Handles state transitions, UI rendering, and player turn lifecycle.
+ */
 export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
+  // --- Game State ---
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [selectedTile, setSelectedTile] = useState<{ x: number, y: number } | null>(null);
   const [validActions, setValidActions] = useState<{ x: number, y: number, type: ActionType }[]>([]);
@@ -30,10 +39,16 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
   const [maxManaCapacity, setMaxManaCapacity] = useState(1);
   const [spawningMinion, setSpawningMinion] = useState<string | null>(null);
 
+  /**
+   * Initialize state when the component mounts with provided decks.
+   */
   useEffect(() => {
     setGameState(createInitialState(blueDeck, redDeck));
   }, [blueDeck, redDeck]);
 
+  /**
+   * Deployment Logic: Highlights the valid King placement zones at the start of the game.
+   */
   useEffect(() => {
     if (placementPhase === 'done' || !gameState) return;
 
@@ -49,6 +64,9 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     setValidActions(spawns);
   }, [placementPhase, gameState?.board]);
 
+  /**
+   * Helper to push a message into the game's activity log.
+   */
   const log = useCallback((message: string) => {
     setGameState(prev => prev ? {
       ...prev,
@@ -56,6 +74,10 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     } : null);
   }, []);
 
+  /**
+   * Ends the current player's turn and prepares state for the next player.
+   * Handles mana calculation, card draws, and cooldown resets.
+   */
   const endTurn = useCallback(() => {
     if (!gameState) return;
     
@@ -63,8 +85,9 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     const nextPlayer = isEndingRedTurn ? 'Blue' : 'Red';
     
     const nextTurnNumber = isEndingRedTurn ? gameState.turnNumber + 1 : gameState.turnNumber;
-    const nextMaxMana = Math.min(6, nextTurnNumber);
+    const nextMaxMana = Math.min(6, nextTurnNumber); // Caps at 6
     
+    // Check for Cat Bonus: Each Cat adds +1 Mana per turn
     let catBonus = 0;
     gameState.board.forEach(row => row.forEach(cell => {
       if (cell.minion && cell.minion.type === 'Cat' && cell.minion.owner === nextPlayer) {
@@ -81,6 +104,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     setGameState(prev => {
       if (!prev) return null;
       
+      // Reset action flags for all minions belonging to the NEXT player
       const newBoard = prev.board.map(row => row.map(cell => {
         if (cell.minion && cell.minion.owner === nextPlayer) {
           return {
@@ -97,6 +121,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         return cell;
       }));
 
+      // Draw 1 card for the starting player
       let newBlueHand = [...prev.blueHand];
       let newBlueDeck = [...prev.blueDeck];
       let newRedHand = [...prev.redHand];
@@ -121,15 +146,21 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       };
     });
 
+    // Cleanup UI selection
     setSelectedTile(null);
     setValidActions([]);
     setSpawningMinion(null);
     log(`Turn ended. It is now ${nextPlayer}'s turn.${catBonus > 0 ? ` (+${catBonus} Cat Mana!)` : ''}`);
   }, [gameState, log]);
 
+  /**
+   * Main interaction handler for board clicks.
+   * Dispatches to deployment, action execution, or target selection based on phase.
+   */
   const handleTileClick = (x: number, y: number) => {
     if (!gameState || gameState.winner) return;
 
+    // Handle initial King placement
     if (placementPhase !== 'done') {
       if (placementPhase === 'blue') {
         if (y > 7 && !gameState.board[y][x].minion) {
@@ -179,6 +210,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       return;
     }
 
+    // Check if the clicked tile is a valid action target for a previously selected minion
     const attackAction = validActions.find(a => a.x === x && a.y === y && a.type === 'attack');
     const abilityAction = validActions.find(a => a.x === x && a.y === y && a.type === 'useAbility');
     const moveAction = validActions.find(a => a.x === x && a.y === y && (a.type === 'move' || a.type === 'dash'));
@@ -195,6 +227,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       return;
     }
 
+    // Select a friendly minion to see its available moves/attacks
     const cell = gameState.board[y][x];
     if (cell.minion && cell.minion.owner === gameState.currentPlayer) {
       setSelectedTile({ x, y });
@@ -210,12 +243,17 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     }
   };
 
+  /**
+   * Performs the heavy lifting for combat, movement, and abilities.
+   * Updates board state, handles HP, and checks for victory.
+   */
   const executeAction = (fromX: number, fromY: number, toX: number, toY: number, type: ActionType) => {
     let manaRequired = 0;
     const sourceCell = gameState!.board[fromY][fromX];
     if (!sourceCell.minion) return;
     const actor = { ...sourceCell.minion };
 
+    // Mana Calculation
     if (type === 'move' || type === 'dash') {
       const isDash = actor.hasMovedThisTurn;
       manaRequired = isDash ? (actor.isVillager ? 2 : 1) : (actor.isVillager ? 1 : 0);
@@ -245,11 +283,13 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       let blueVillagerDead = false;
       let redVillagerDead = false;
 
+      // Handle Movement Logic
       if (type === 'move' || type === 'dash') {
         const isDash = updatedMinion.hasMovedThisTurn;
         updatedMinion.hasMovedThisTurn = true;
         if (isDash) updatedMinion.hasDashedThisTurn = true;
 
+        // Rabbit Lucky Foot: Draw 1 when jumping over a unit
         if (updatedMinion.type === 'Rabbit') {
           const dx = Math.abs(toX - fromX);
           const dy = Math.abs(toY - fromY);
@@ -271,13 +311,16 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         newBoard[fromY][fromX].minion = null;
         newBoard[toY][toX].minion = updatedMinion;
         log(`${prev.currentPlayer} ${updatedMinion.type} moved to ${COL_LABELS[toX]}${ROW_LABELS[toY]}.`);
-      } else if (type === 'attack') {
+      } 
+      // Handle Attack Logic
+      else if (type === 'attack') {
         updatedMinion.hasAttackedThisTurn = true;
         newBoard[fromY][fromX].minion = updatedMinion;
         
         let victims: { x: number, y: number }[] = [{ x: toX, y: toY }];
         let shouldMoveAttackerToTarget = false;
 
+        // AOE and Special Attack pattern resolution
         if (updatedMinion.type === 'Creeper') {
           log(`${prev.currentPlayer} Creeper DETONATED!`);
           victims = [];
@@ -287,7 +330,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
           ];
           directions.forEach(d => victims.push({ x: fromX + d.dx, y: fromY + d.dy }));
-          newBoard[fromY][fromX].minion = null;
+          newBoard[fromY][fromX].minion = null; // Creeper is consumed
         } else if (updatedMinion.type === 'Puffer-Fish') {
             log(`${prev.currentPlayer} Puffer-Fish SPIKES!`);
             victims = [
@@ -297,7 +340,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         } else if (updatedMinion.type === 'Iron Golem') {
             log(`${prev.currentPlayer} Iron Golem SWEEP!`);
             const dx = toX - fromX;
-            const dy = toY - fromY;
             if (dx === 0) {
                 victims = [{ x: fromX - 1, y: toY }, { x: fromX, y: toY }, { x: fromX + 1, y: toY }];
             } else {
@@ -306,7 +348,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         } else if (updatedMinion.type === 'Wither') {
             log(`${prev.currentPlayer} Wither STORM PROJECTILE!`);
             const dx = toX - fromX;
-            const dy = toY - fromY;
             if (dx === 0) {
                 victims = [{ x: toX - 1, y: toY }, { x: toX, y: toY }, { x: toX + 1, y: toY }];
             } else {
@@ -316,11 +357,12 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             shouldMoveAttackerToTarget = true;
         }
 
-        // Process victim removal BEFORE moving attacker to prevent self-deletion
+        // Process victim removal and "On Death" triggers
         victims.forEach(v => {
           if (v.x < 0 || v.x >= 8 || v.y < 0 || v.y >= 10) return;
           const target = newBoard[v.y][v.x].minion;
           if (target) {
+            // Wither has 3HP
             if (target.type === 'Wither') {
               const currentHP = target.currentHealth ?? 3;
               if (currentHP > 1) {
@@ -330,6 +372,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
               }
             }
 
+            // Pig Hoarder Death: Draw 1
             if (target.type === 'Pig') {
               if (target.owner === 'Blue' && newBlueDeck.length > 0) {
                 newBlueHand.push(newBlueDeck.shift()!);
@@ -338,7 +381,9 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
                 newRedHand.push(newRedDeck.shift()!);
                 log("Pig Death Hoarder: Red draws a card!");
               }
-            } else if (target.type === 'Sniffer') {
+            } 
+            // Sniffer Death: Discard 2
+            else if (target.type === 'Sniffer') {
               if (target.owner === 'Blue') {
                 newBlueHand.splice(0, 2);
                 log("Sniffer Death Scent: Blue discards 2 cards!");
@@ -348,6 +393,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
               }
             }
 
+            // Check for Game End
             if (target.isVillager) {
               if (target.owner === 'Blue') blueVillagerDead = true;
               else redVillagerDead = true;
@@ -356,17 +402,20 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           }
         });
 
-        // Now move the attacker if it's a move-to-attack unit
+        // Resolve move-to-attack position
         if (shouldMoveAttackerToTarget) {
             newBoard[fromY][fromX].minion = null;
             newBoard[toY][toX].minion = updatedMinion;
             log(`${prev.currentPlayer} ${updatedMinion.type} kinetic strike!`);
         }
-      } else if (type === 'useAbility') {
+      } 
+      // Handle Ability Logic
+      else if (type === 'useAbility') {
         updatedMinion.hasAttackedThisTurn = true;
         newBoard[fromY][fromX].minion = updatedMinion;
         
         if (updatedMinion.type === 'Frog') {
+          // Frog Pull: Moves target closer along a line
           const victim = { ...newBoard[toY][toX].minion! };
           const dx = fromX === toX ? 0 : (toX > fromX ? -1 : 1);
           const dy = fromY === toY ? 0 : (toY > fromY ? -1 : 1);
@@ -387,6 +436,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           newBoard[lastY][lastX].minion = victim;
           log(`${prev.currentPlayer} Frog pulled ${victim.type} closer!`);
         } else if (updatedMinion.type === 'Enderman') {
+          // Enderman Teleport: Swap places
           const targetMinion = { ...newBoard[toY][toX].minion! };
           newBoard[fromY][fromX].minion = targetMinion;
           newBoard[toY][toX].minion = updatedMinion;
@@ -394,6 +444,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         }
       }
 
+      // Resolve Victory
       let winner = prev.winner;
       if (redVillagerDead && !blueVillagerDead) winner = 'Blue';
       else if (blueVillagerDead && !redVillagerDead) winner = 'Red';
@@ -413,6 +464,9 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     setValidActions([]);
   };
 
+  /**
+   * Highlights valid deployment zones for a specific minion type.
+   */
   const startSpawn = (type: string) => {
     if (!gameState) return;
     const data = getMinionData(type);
@@ -435,6 +489,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       for (let x = 0; x < 8; x++) {
         const cell = gameState.board[y][x];
         if (!cell.minion) {
+            // Phantoms are bound by their Ethereal trait even during spawn
             if (type === "Phantom" && !cell.isDarkTile) continue;
             spawns.push({ x, y, type: 'spawn' });
         }
@@ -451,6 +506,10 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     setSelectedTile(null);
   };
 
+  /**
+   * Finalizes the summoning of a minion to the board.
+   * Deducts mana and triggers "On Spawn" abilities (Sniffer, Pig, Wither).
+   */
   const executeSpawn = (x: number, y: number, type: string) => {
     const data = getMinionData(type);
     
@@ -472,6 +531,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       let newRedHand = [...prev.redHand];
       let newRedDeck = [...prev.redDeck];
 
+      // Remove from hand
       if (prev.currentPlayer === 'Blue') {
         const idx = newBlueHand.indexOf(type);
         if (idx !== -1) newBlueHand.splice(idx, 1);
@@ -486,7 +546,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         owner: prev.currentPlayer,
         isVillager: false,
         currentHealth: data.hp || 1,
-        hasSpawnSickness: true,
+        hasSpawnSickness: true, // Cannot move on first turn
         hasAttackedThisTurn: false,
         hasMovedThisTurn: false,
         hasDashedThisTurn: false
@@ -494,6 +554,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
       log(`${prev.currentPlayer} summoned ${type} at ${COL_LABELS[x]}${ROW_LABELS[y]}.`);
 
+      // Spawn Triggers
       if (type === 'Pig') {
         if (prev.currentPlayer === 'Blue' && newBlueDeck.length > 0) {
           newBlueHand.push(newBlueDeck.shift()!);
@@ -503,6 +564,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           log(`Pig Hoarder: Red draws a card!`);
         }
       } else if (type === 'Sniffer') {
+        // Sniffer steals 2 from enemy deck
         if (prev.currentPlayer === 'Blue') {
           for (let i = 0; i < 2; i++) {
             if (newRedDeck.length > 0) newBlueHand.push(newRedDeck.shift()!);
@@ -518,6 +580,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
       let winner = prev.winner;
 
+      // Wither Storm: Destroys surrounding 8 squares on entry
       if (type === 'Wither') {
         log(`WITHER SPAWN STORM ACTIVATED!`);
         const directions = [
@@ -536,25 +599,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             const victim = newBoard[ny][nx].minion;
             if (victim) {
               log(`Storm destroyed ${victim.owner} ${victim.type}`);
-
-              if (victim.type === 'Pig') {
-                if (victim.owner === 'Blue' && newBlueDeck.length > 0) {
-                  newBlueHand.push(newBlueDeck.shift()!);
-                  log("Pig Death Hoarder (Storm): Blue draws a card!");
-                } else if (victim.owner === 'Red' && newRedDeck.length > 0) {
-                  newRedHand.push(newRedDeck.shift()!);
-                  log("Pig Death Hoarder (Storm): Red draws a card!");
-                }
-              } else if (victim.type === 'Sniffer') {
-                if (victim.owner === 'Blue') {
-                  newBlueHand.splice(0, 2);
-                  log("Sniffer Death Scent (Storm): Blue discards 2 cards!");
-                } else {
-                  newRedHand.splice(0, 2);
-                  log("Sniffer Death Scent (Storm): Red discards 2 cards!");
-                }
-              }
-
               if (victim.isVillager) {
                 if (victim.owner === 'Blue') blueVillagerDead = true;
                 else redVillagerDead = true;
@@ -583,6 +627,8 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     setValidActions([]);
   };
 
+  // --- Render Helpers ---
+
   if (!gameState) return <div className="p-20 text-center text-white">Preparing the Arena...</div>;
 
   const currentHand = gameState.currentPlayer === 'Blue' ? gameState.blueHand : gameState.redHand;
@@ -590,6 +636,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
                             (placementPhase === 'red' && gameState.currentPlayer === 'Red');
   const displayedHand = isMyPlacementPhase ? ["Villager", ...currentHand] : currentHand;
 
+  // Board flipping for local 1v1 play (Optional visual comfort)
   const isRedTurn = gameState.currentPlayer === 'Red';
   const displayBoard = isRedTurn 
     ? [...gameState.board].reverse().map(row => [...row].reverse()) 
@@ -599,7 +646,9 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-background overflow-hidden">
+      {/* --- Battlefield View --- */}
       <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-4 relative min-h-0 bg-[#1a161e]">
+        {/* Game Headers */}
         <div className="absolute top-4 left-4 lg:top-8 lg:left-8 flex items-center gap-2 z-10">
           <Badge variant="outline" className={cn(
             "px-2 py-1 lg:px-4 lg:py-2 text-sm lg:text-lg transition-colors",
@@ -614,6 +663,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           )}
         </div>
 
+        {/* Victory Overlay */}
         {gameState.winner && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
             <div className="text-center p-6 md:p-10 bg-zinc-900 border border-primary/50 rounded-2xl shadow-2xl animate-in zoom-in-95 mx-4">
@@ -627,6 +677,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           </div>
         )}
 
+        {/* Grid and Coordinates */}
         <div className="relative flex flex-col items-center">
             <div className="flex w-[min(90vw,65vh)] justify-around px-1 mb-1">
                 {displayColLabels.map(l => <span key={l} className="text-[10px] md:text-xs font-headline text-white/30 uppercase tracking-tighter w-full text-center">{l}</span>)}
@@ -666,7 +717,9 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         </div>
       </div>
 
+      {/* --- Sidebar Control Panel --- */}
       <div className="w-full lg:w-[380px] border-t lg:border-t-0 lg:border-l border-white/5 bg-zinc-950/50 backdrop-blur-xl flex flex-col overflow-hidden h-[45vh] lg:h-screen">
+        {/* Mana Tracker */}
         <div className="p-4 lg:p-6 border-b border-white/5 bg-primary/5 shrink-0">
           <div className="flex justify-between items-end mb-2 lg:mb-4">
             <div>
@@ -700,6 +753,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           </div>
         </div>
 
+        {/* Hand and Logs */}
         <div className="flex-1 overflow-hidden flex flex-col min-h-0 resize-y">
           <ScrollArea className="flex-1">
             <div className="p-4 lg:p-6 space-y-6">
@@ -756,6 +810,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           </ScrollArea>
         </div>
 
+        {/* Global Controls */}
         <div className="p-4 lg:p-6 border-t border-white/5 bg-zinc-950 shrink-0">
           <Button 
             className="w-full bg-primary hover:bg-primary/80 h-10 lg:h-12 text-sm lg:text-md font-headline"
@@ -769,3 +824,4 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     </div>
   );
 }
+
