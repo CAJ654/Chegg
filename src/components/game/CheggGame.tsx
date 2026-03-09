@@ -684,7 +684,8 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
                     <Card 
                       key={`${type}-${i}`} 
                       className={cn(
-                        "cursor-pointer hover:border-primary/50 transition-all bg-zinc-900/50 border-white/5",
+                        "cursor-pointer hover:border-primary/80 transition-all bg-zinc-900/80",
+                        gameState.currentPlayer === 'Blue' ? "border-blue-500/50 shadow-sm shadow-blue-500/10" : "border-red-500/50 shadow-sm shadow-red-500/10",
                         getMinionData(type).cost > currentMana && placementPhase === 'done' && "opacity-40 grayscale",
                         spawningMinion === type && "ring-2 ring-primary bg-primary/10",
                         type === "Villager" && placementPhase !== 'done' && "border-yellow-500/50 bg-yellow-500/10"
