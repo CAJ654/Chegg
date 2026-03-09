@@ -143,7 +143,24 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
     directions.forEach(d => {
       if (checkEnemy(startX + d.dx, startY + d.dy)) targets.push({ x: startX + d.dx, y: startY + d.dy });
     });
-  } else if (data.attackPattern === "4 lateral directions" || data.attackPattern === "3 adjacent lateral tiles") {
+  } else if (data.attackPattern === "3 adjacent lateral tiles") {
+    // Iron Golem sweep: hits a 3-tile arc. Clicking a lateral tile targets the sweep in that direction.
+    // If ANY of the 3 tiles in the sweep contain an enemy, the lateral tile is a valid attack target.
+    const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
+    lats.forEach(d => {
+      const tx = startX + d.dx;
+      const ty = startY + d.dy;
+      if (tx < 0 || tx >= BOARD_COLS || ty < 0 || ty >= BOARD_ROWS) return;
+
+      const sweep = d.dx === 0 
+        ? [{ x: tx - 1, y: ty }, { x: tx, y: ty }, { x: tx + 1, y: ty }]
+        : [{ x: tx, y: ty - 1 }, { x: tx, y: ty }, { x: tx, y: ty + 1 }];
+      
+      if (sweep.some(s => checkEnemy(s.x, s.y))) {
+        targets.push({ x: tx, y: ty });
+      }
+    });
+  } else if (data.attackPattern === "4 lateral directions") {
     const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
     lats.forEach(d => {
       if (checkEnemy(startX + d.dx, startY + d.dy)) targets.push({ x: startX + d.dx, y: startY + d.dy });
@@ -159,25 +176,46 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
       for (let i = 1; i <= 3; i++) {
         const nx = startX + (d.dx * i);
         const ny = startY + (d.dy * i);
+        if (nx < 0 || nx >= BOARD_COLS || ny < 0 || ny >= BOARD_ROWS) break;
         if (checkEnemy(nx, ny)) {
             targets.push({ x: nx, y: ny });
-            break; // Blocked by first enemy hit
+            break; 
         }
-        if (gameState.board[ny] && gameState.board[ny][nx] && gameState.board[ny][nx].minion) break; // Blocked by any unit
+        if (gameState.board[ny][nx].minion) break; 
       }
     });
-  } else if (data.attackPattern === "2-tile lateral range" || data.attackPattern === "3-tile lateral projectile") {
-    const range = data.attackPattern.includes("3-tile") ? 3 : 2;
+  } else if (data.attackPattern === "2-tile lateral range") {
     const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
     lats.forEach(d => {
-      for (let i = 1; i <= range; i++) {
+      for (let i = 1; i <= 2; i++) {
         const nx = startX + (d.dx * i);
         const ny = startY + (d.dy * i);
+        if (nx < 0 || nx >= BOARD_COLS || ny < 0 || ny >= BOARD_ROWS) break;
         if (checkEnemy(nx, ny)) {
             targets.push({ x: nx, y: ny });
             break;
         }
-        if (gameState.board[ny] && gameState.board[ny][nx] && gameState.board[ny][nx].minion) break;
+        if (gameState.board[ny][nx].minion) break;
+      }
+    });
+  } else if (data.attackPattern === "3-tile lateral projectile") {
+    // Wither logic: target + lateral splash. If any tile in the impact zone hits an enemy, highlight the target tile.
+    const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
+    lats.forEach(d => {
+      for (let i = 1; i <= 3; i++) {
+        const nx = startX + (d.dx * i);
+        const ny = startY + (d.dy * i);
+        if (nx < 0 || nx >= BOARD_COLS || ny < 0 || ny >= BOARD_ROWS) break;
+        
+        const sweep = d.dx === 0
+            ? [{ x: nx - 1, y: ny }, { x: nx, y: ny }, { x: nx + 1, y: ny }]
+            : [{ x: nx, y: ny - 1 }, { x: nx, y: ny }, { x: nx, y: ny + 1 }];
+        
+        if (sweep.some(s => checkEnemy(s.x, s.y))) {
+            targets.push({ x: nx, y: ny });
+        }
+        
+        if (gameState.board[ny][nx].minion) break; 
       }
     });
   } else if (data.attackPattern === "Ranged (Line of Sight)") {
