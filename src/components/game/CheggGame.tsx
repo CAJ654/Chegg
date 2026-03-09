@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -183,7 +184,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
     const moveAction = validActions.find(a => a.x === x && a.y === y && (a.type === 'move' || a.type === 'dash'));
     const spawnAction = validActions.find(a => a.x === x && a.y === y && a.type === 'spawn');
 
-    // Prioritize actions: attack/ability > move > spawn
     const action = attackAction || abilityAction || moveAction || spawnAction;
 
     if (action) {
@@ -276,6 +276,7 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
         newBoard[fromY][fromX].minion = updatedMinion;
         
         let victims: { x: number, y: number }[] = [{ x: toX, y: toY }];
+        let shouldMoveAttackerToTarget = false;
 
         if (updatedMinion.type === 'Creeper') {
           log(`${prev.currentPlayer} Creeper DETONATED!`);
@@ -312,11 +313,10 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
                 victims = [{ x: toX, y: toY - 1 }, { x: toX, y: toY }, { x: toX, y: toY + 1 }];
             }
         } else if (updatedMinion.type === 'Shulker-Box' || updatedMinion.type === 'Slime' || updatedMinion.type === 'Phantom') {
-            newBoard[fromY][fromX].minion = null;
-            newBoard[toY][toX].minion = updatedMinion;
-            log(`${prev.currentPlayer} ${updatedMinion.type} kinetic strike!`);
+            shouldMoveAttackerToTarget = true;
         }
 
+        // Process victim removal BEFORE moving attacker to prevent self-deletion
         victims.forEach(v => {
           if (v.x < 0 || v.x >= 8 || v.y < 0 || v.y >= 10) return;
           const target = newBoard[v.y][v.x].minion;
@@ -347,6 +347,13 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             newBoard[v.y][v.x].minion = null;
           }
         });
+
+        // Now move the attacker if it's a move-to-attack unit
+        if (shouldMoveAttackerToTarget) {
+            newBoard[fromY][fromX].minion = null;
+            newBoard[toY][toX].minion = updatedMinion;
+            log(`${prev.currentPlayer} ${updatedMinion.type} kinetic strike!`);
+        }
       } else if (type === 'useAbility') {
         updatedMinion.hasAttackedThisTurn = true;
         newBoard[fromY][fromX].minion = updatedMinion;
@@ -420,7 +427,6 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
       for (let x = 0; x < 8; x++) {
         const cell = gameState.board[y][x];
         if (!cell.minion) {
-            // Phantom can only spawn on dark tiles
             if (type === "Phantom" && !cell.isDarkTile) continue;
             spawns.push({ x, y, type: 'spawn' });
         }
