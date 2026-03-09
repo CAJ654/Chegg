@@ -4,7 +4,6 @@
 import { useState } from "react";
 import { DeckBuilder } from "@/components/game/DeckBuilder";
 import { CheggGame } from "@/components/game/CheggGame";
-import { RulesDialog } from "@/components/game/RulesDialog";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Sword, Zap } from "lucide-react";
 
@@ -12,7 +11,6 @@ export default function Home() {
   const [phase, setPhase] = useState<'landing' | 'deckBlue' | 'deckRed' | 'game'>('landing');
   const [blueDeck, setBlueDeck] = useState<string[]>([]);
   const [redDeck, setRedDeck] = useState<string[]>([]);
-  const [showRules, setShowRules] = useState(false);
 
   const startDeckBuilding = () => setPhase('deckBlue');
   
@@ -24,6 +22,10 @@ export default function Home() {
   const completeRedDeck = (deck: string[]) => {
     setRedDeck(deck);
     setPhase('game');
+  };
+
+  const openRulebook = () => {
+    window.open('https://docs.google.com/document/d/1TM736HhNsh2nz8l3L-a6PuWAVxbnBSF__NB7qX7Wdlw/edit?usp=sharing', '_blank');
   };
 
   if (phase === 'landing') {
@@ -55,7 +57,7 @@ export default function Home() {
               size="lg" 
               variant="outline" 
               className="h-14 md:h-16 px-8 md:px-12 text-lg md:text-xl font-headline rounded-2xl w-full sm:w-auto"
-              onClick={() => setShowRules(true)}
+              onClick={openRulebook}
             >
               <ShieldCheck className="mr-3 w-5 h-5 md:w-6 md:h-6" /> How to Play
             </Button>
@@ -76,8 +78,6 @@ export default function Home() {
             </div>
           </div>
         </main>
-
-        <RulesDialog open={showRules} onOpenChange={setShowRules} />
       </div>
     );
   }
