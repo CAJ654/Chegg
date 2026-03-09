@@ -338,6 +338,14 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
                 newRedHand.push(newRedDeck.shift()!);
                 log("Pig Death Hoarder: Red draws a card!");
               }
+            } else if (target.type === 'Sniffer') {
+              if (target.owner === 'Blue') {
+                newBlueHand.splice(0, 2);
+                log("Sniffer Death Scent: Blue discards 2 cards!");
+              } else {
+                newRedHand.splice(0, 2);
+                log("Sniffer Death Scent: Red discards 2 cards!");
+              }
             }
 
             if (target.isVillager) {
@@ -494,6 +502,18 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
           newRedHand.push(newRedDeck.shift()!);
           log(`Pig Hoarder: Red draws a card!`);
         }
+      } else if (type === 'Sniffer') {
+        if (prev.currentPlayer === 'Blue') {
+          for (let i = 0; i < 2; i++) {
+            if (newRedDeck.length > 0) newBlueHand.push(newRedDeck.shift()!);
+          }
+          log("Sniffer Scent: Blue draws 2 from Red's deck!");
+        } else {
+          for (let i = 0; i < 2; i++) {
+            if (newBlueDeck.length > 0) newRedHand.push(newBlueDeck.shift()!);
+          }
+          log("Sniffer Scent: Red draws 2 from Blue's deck!");
+        }
       }
 
       let winner = prev.winner;
@@ -524,6 +544,14 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
                 } else if (victim.owner === 'Red' && newRedDeck.length > 0) {
                   newRedHand.push(newRedDeck.shift()!);
                   log("Pig Death Hoarder (Storm): Red draws a card!");
+                }
+              } else if (victim.type === 'Sniffer') {
+                if (victim.owner === 'Blue') {
+                  newBlueHand.splice(0, 2);
+                  log("Sniffer Death Scent (Storm): Blue discards 2 cards!");
+                } else {
+                  newRedHand.splice(0, 2);
+                  log("Sniffer Death Scent (Storm): Red discards 2 cards!");
                 }
               }
 
