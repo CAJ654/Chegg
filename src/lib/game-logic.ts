@@ -84,6 +84,23 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
       const ny = startY + d.dy;
       if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
     });
+  } else if (data.movementPattern === "Up to 2 squares (8 directions)") {
+    const directions = [
+      { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
+      { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
+      { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
+    ];
+    directions.forEach(d => {
+      // Check 1 square distance
+      const n1x = startX + d.dx;
+      const n1y = startY + d.dy;
+      if (checkTile(n1x, n1y)) moves.push({ x: n1x, y: n1y });
+
+      // Check 2 square distance
+      const n2x = startX + (d.dx * 2);
+      const n2y = startY + (d.dy * 2);
+      if (checkTile(n2x, n2y)) moves.push({ x: n2x, y: n2y });
+    });
   } else if (data.movementPattern === "3 squares forward") {
     const dir = minion.owner === 'Blue' ? -1 : 1;
     const ny = startY + dir;
