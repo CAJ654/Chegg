@@ -1,7 +1,11 @@
 
-# CHEGG | Arcane Warfare
+# CHEGG
 
-A strategic board game of minions and mana, based on the rules created by Gerg.
+A strategic Minecraft-based board game of minions and mana, based on the rules created by Gerg.
+
+## Rules
+
+Official Rulebook: [Google Doc](https://docs.google.com/document/d/1TM736HhNsh2nz8l3L-a6PuWAVxbnBSF__NB7qX7Wdlw/edit?usp=drivesdk)
 
 ## Project Setup
 
