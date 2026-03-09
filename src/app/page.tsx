@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -37,7 +36,7 @@ export default function Home() {
 
         <main className="z-10 text-center px-6 max-w-4xl w-full">
           <h1 className="text-5xl md:text-8xl lg:text-9xl font-headline text-white mb-6 tracking-tighter leading-none animate-in fade-in duration-1000">
-            CHEGG <span className="text-primary">TACTICS</span>
+            CHEGG
           </h1>
           
           <p className="text-lg md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-200 px-4">
