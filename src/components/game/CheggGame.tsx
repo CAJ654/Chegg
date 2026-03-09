@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -306,10 +305,10 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
             } else {
                 victims = [{ x: toX, y: toY - 1 }, { x: toX, y: toY }, { x: toX, y: toY + 1 }];
             }
-        } else if (updatedMinion.type === 'Shulker-Box') {
+        } else if (updatedMinion.type === 'Shulker-Box' || updatedMinion.type === 'Slime') {
             newBoard[fromY][fromX].minion = null;
             newBoard[toY][toX].minion = updatedMinion;
-            log(`${prev.currentPlayer} Shulker-Box kinetic teleport!`);
+            log(`${prev.currentPlayer} ${updatedMinion.type} kinetic strike!`);
         }
 
         victims.forEach(v => {
@@ -413,12 +412,17 @@ export function CheggGame({ blueDeck, redDeck }: CheggGameProps) {
 
     for (let y = minRow; y < maxRow; y++) {
       for (let x = 0; x < 8; x++) {
-        if (!gameState.board[y][x].minion) spawns.push({ x, y, type: 'spawn' });
+        const cell = gameState.board[y][x];
+        if (!cell.minion) {
+            // Phantom can only spawn on dark tiles
+            if (type === "Phantom" && !cell.isDarkTile) continue;
+            spawns.push({ x, y, type: 'spawn' });
+        }
       }
     }
 
     if (spawns.length === 0) {
-      toast({ title: "Spawn Zone Full", description: "Clear your deployment zone to summon new units.", variant: "destructive" });
+      toast({ title: "Invalid Spawn Position", description: type === "Phantom" ? "Phantom must spawn on a dark tile." : "Spawn zone full.", variant: "destructive" });
       return;
     }
 

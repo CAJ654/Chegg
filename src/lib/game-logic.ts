@@ -48,6 +48,9 @@ export function getMinionData(type: string): MinionData {
 export function getValidMoves(gameState: GameState, minion: MinionInstance, startX: number, startY: number, currentMana: number): { x: number, y: number }[] {
   if (minion.hasSpawnSickness || minion.hasAttackedThisTurn) return [];
   
+  // Phantom can only move if it is currently on a dark tile
+  if (minion.type === "Phantom" && !gameState.board[startY][startX].isDarkTile) return [];
+
   const moves: { x: number, y: number }[] = [];
   const data = getMinionData(minion.type);
   
@@ -78,9 +81,17 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
       { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
     ];
     directions.forEach(d => {
+      // Distance 1
       const nx = startX + d.dx;
       const ny = startY + d.dy;
       if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
+
+      // Slime Elastic Jump (Distance 2)
+      if (minion.type === "Slime") {
+        const nx2 = startX + d.dx * 2;
+        const ny2 = startY + d.dy * 2;
+        if (checkTile(nx2, ny2)) moves.push({ x: nx2, y: ny2 });
+      }
     });
   } else if (data.movementPattern === "2 lateral, 1 diagonal") {
     const directions = [
@@ -167,6 +178,9 @@ export function getValidAbilities(gameState: GameState, minion: MinionInstance, 
 export function getValidAttacks(gameState: GameState, minion: MinionInstance, startX: number, startY: number, currentMana: number): { x: number, y: number }[] {
   if (minion.isVillager || minion.hasSpawnSickness || minion.hasAttackedThisTurn || minion.hasDashedThisTurn) return [];
   
+  // Phantom can only attack if it is currently on a dark tile
+  if (minion.type === "Phantom" && !gameState.board[startY][startX].isDarkTile) return [];
+
   const attackCost = minion.type === "Wither" ? 2 : 1;
   if (currentMana < attackCost) return [];
 
@@ -278,6 +292,23 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
             nx += d.dx;
             ny += d.dy;
         }
+    });
+  } else if (data.attackPattern === "Move-to-attack") {
+    const directions = [
+      { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
+      { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
+      { dx: -1, dy: 1 }, { dx: 0, dy: 1 }, { dx: 1, dy: 1 }
+    ];
+    directions.forEach(d => {
+      // Distance 1
+      if (checkEnemy(startX + d.dx, startY + d.dy)) targets.push({ x: startX + d.dx, y: startY + d.dy });
+
+      // Slime Elastic Move-to-attack (Distance 2)
+      if (minion.type === "Slime") {
+        if (checkEnemy(startX + d.dx * 2, startY + d.dy * 2)) {
+          targets.push({ x: startX + d.dx * 2, y: startY + d.dy * 2 });
+        }
+      }
     });
   }
 
