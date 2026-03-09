@@ -17,8 +17,8 @@ export function MinionIcon({ type, className }: { type: string, className?: stri
       return (
         <SvgWrapper>
           <rect x="2" y="2" width="12" height="12" fill="#BD8E72" />
-          <rect x="4" y="6" width="2" height="2" fill="white" />
-          <rect x="10" y="6" width="2" height="2" fill="white" />
+          <rect x="4" y="6" width="2" height="2" fill="black" />
+          <rect x="10" y="6" width="2" height="2" fill="black" />
           <rect x="7" y="8" width="2" height="4" fill="#8C634F" />
         </SvgWrapper>
       );
