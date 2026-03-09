@@ -25,7 +25,7 @@ export const MINION_MASTER_LIST: MinionData[] = [
   { type: "Enderman", cost: 4, movementPattern: "Cannot move", attackPattern: "8 surrounding squares", specialAbilities: "Teleport (1 Mana): Swap places with any unit (except Villager) in a lateral line.", hp: 1 },
   { type: "Slime", cost: 4, movementPattern: "8 surrounding squares (Range 2)", attackPattern: "Move-to-attack", specialAbilities: "Elastic: Can jump over pieces. Attacks the tile it lands on (Cost: 1 Mana).", hp: 1 },
   { type: "Shulker-Box", cost: 4, movementPattern: "Attack-move only", attackPattern: "Ranged (Line of Sight)", specialAbilities: "Kinetic: Only moves by 'teleporting' to the tile of a unit it attacks.", hp: 1 },
-  { type: "Parrot", cost: 5, movementPattern: "8 surrounding squares", attackPattern: "Variable", specialAbilities: "Mimic: Copies the attack pattern of any laterally adjacent minion.", hp: 1 },
+  { type: "Parrot", cost: 5, movementPattern: "2 lateral / 2 diagonal", attackPattern: "Mimic", specialAbilities: "Mimic: Copies the attack pattern of any laterally adjacent minion (friendly or enemy).", hp: 1 },
   { type: "Cat", cost: 5, movementPattern: "Cannot move", attackPattern: "None", specialAbilities: "Feline Grace: Grants owner +1 Mana per turn (Stacks).", hp: 1 },
   { type: "Sniffer", cost: 5, movementPattern: "8 surrounding squares", attackPattern: "None", specialAbilities: "Scent: Spawn: Draw 2 from enemy deck; Death: Discard 2 from your hand.", hp: 1 },
   { type: "Wither", cost: 6, movementPattern: "8 surrounding squares", attackPattern: "3-tile lateral projectile", specialAbilities: "Storm: Spawn: Destroys surrounding 8 squares. Attack (2 Mana): Hits target + lateral splash.", hp: 3 },

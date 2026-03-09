@@ -74,7 +74,7 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
     return true;
   };
 
-  if (data.movementPattern === "8 surrounding squares" || data.movementPattern === "8 surrounding squares (Range 2)") {
+  if (data.movementPattern === "8 surrounding squares" || data.movementPattern === "8 surrounding squares (Range 2)" || data.movementPattern === "2 lateral / 2 diagonal") {
     const directions = [
       { dx: -1, dy: -1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
       { dx: -1, dy: 0 },                  { dx: 1, dy: 0 },
@@ -86,8 +86,8 @@ export function getValidMoves(gameState: GameState, minion: MinionInstance, star
       const ny = startY + d.dy;
       if (checkTile(nx, ny)) moves.push({ x: nx, y: ny });
 
-      // Slime Elastic Jump or Phantom Ethereal Range (Distance 2)
-      if (minion.type === "Slime" || minion.type === "Phantom") {
+      // Slime Elastic Jump or Phantom Ethereal Range or Parrot Agile Range (Distance 2)
+      if (minion.type === "Slime" || minion.type === "Phantom" || minion.type === "Parrot") {
         const nx2 = startX + d.dx * 2;
         const ny2 = startY + d.dy * 2;
         if (checkTile(nx2, ny2)) moves.push({ x: nx2, y: ny2 });
@@ -193,6 +193,38 @@ export function getValidAttacks(gameState: GameState, minion: MinionInstance, st
     if (targetMinion && targetMinion.owner !== minion.owner) return true;
     return false;
   };
+
+  // Parrot Mimic Ability Implementation
+  if (minion.type === "Parrot") {
+    const lats = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
+    const neighborTypes = new Set<string>();
+    
+    // Find all unique laterally adjacent minion types (excluding other Parrots to avoid loops)
+    lats.forEach(d => {
+      const nx = startX + d.dx;
+      const ny = startY + d.dy;
+      if (nx >= 0 && nx < BOARD_COLS && ny >= 0 && ny < BOARD_ROWS) {
+        const neighbor = gameState.board[ny][nx].minion;
+        if (neighbor && neighbor.type !== "Parrot" && neighbor.type !== "Villager") {
+          neighborTypes.add(neighbor.type);
+        }
+      }
+    });
+
+    // Mimic the attack patterns of all identified neighbors
+    neighborTypes.forEach(type => {
+      const mockMinion: MinionInstance = { ...minion, type };
+      const mimickedTargets = getValidAttacks(gameState, mockMinion, startX, startY, currentMana);
+      mimickedTargets.forEach(t => {
+        if (!targets.some(existing => existing.x === t.x && existing.y === t.y)) {
+          targets.push(t);
+        }
+      });
+    });
+    
+    // If mimicking unit type, return those targets
+    if (neighborTypes.size > 0) return targets;
+  }
 
   if (data.attackPattern === "8 surrounding squares") {
     const directions = [
