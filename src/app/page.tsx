@@ -63,11 +63,7 @@ export default function Home() {
             </Button>
           </div>
 
-          <div className="mt-16 md:mt-24 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 text-left animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-700">
-            <div className="p-6 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-              <h3 className="text-primary font-headline text-lg md:text-xl mb-2">Arcane Mana</h3>
-              <p className="text-xs md:text-sm text-muted-foreground">Master the mana progression from 1 to 6. Every decision counts.</p>
-            </div>
+          <div className="mt-16 md:mt-24 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 text-left animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-700">
             <div className="p-6 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
               <h3 className="text-primary font-headline text-lg md:text-xl mb-2">Unique Minions</h3>
               <p className="text-xs md:text-sm text-muted-foreground">18 specialized units with distinct move and attack patterns.</p>
