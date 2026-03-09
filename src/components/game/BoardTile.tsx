@@ -35,9 +35,12 @@ export function BoardTile({
       onClick={onClick}
       className={cn(
         "relative w-full aspect-square border-[0.5px] border-zinc-500/10 flex items-center justify-center cursor-pointer transition-all duration-200",
+        // Apply base light/dark classes
         cell.isDarkTile ? "tile-dark" : "tile-light",
+        // Apply tinted zone classes which override base background if present
         isSpawnZoneRed && "spawn-zone-red",
         isSpawnZoneBlue && "spawn-zone-blue",
+        // Highlights and states
         isSelected && "ring-4 ring-primary ring-inset z-10 bg-primary/20",
         isValidMove && "after:absolute after:w-4 after:h-4 after:bg-secondary/60 after:rounded-full after:shadow-sm hover:bg-secondary/20",
         isValidAttack && "ring-4 ring-destructive ring-inset z-10 bg-destructive/30 hover:bg-destructive/40",

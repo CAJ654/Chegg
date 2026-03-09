@@ -53,12 +53,31 @@
   @apply bg-zinc-100;
 }
 
+/* Red Spawn Zone Tints (Preserving Light/Dark for Phantoms) */
+.spawn-zone-red.tile-dark {
+  @apply bg-red-950/80;
+}
+
+.spawn-zone-red.tile-light {
+  @apply bg-red-100;
+}
+
+/* Blue Spawn Zone Tints (Preserving Light/Dark for Phantoms) */
+.spawn-zone-blue.tile-dark {
+  @apply bg-blue-950/80;
+}
+
+.spawn-zone-blue.tile-light {
+  @apply bg-blue-100;
+}
+
+/* Shared zone styles */
 .spawn-zone-red {
-  @apply ring-1 ring-inset ring-red-500/40 bg-red-500/10;
+  @apply ring-1 ring-inset ring-red-500/20;
 }
 
 .spawn-zone-blue {
-  @apply ring-1 ring-inset ring-blue-500/40 bg-blue-500/10;
+  @apply ring-1 ring-inset ring-blue-500/20;
 }
 
 /* Custom scrollbar for game elements */
