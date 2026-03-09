@@ -18,7 +18,7 @@ const MINION_MASTER_LIST_DATA = [
   { "minion": "Rabbit", "cost": 2, "movementPattern": "2-tile lateral 'hop'", "attackPattern": "None", "specialAbilities": "Lucky Foot: Draw 1 minion if it jumps over any unit during its move." },
   { "minion": "Puffer-Fish", "cost": 2, "movementPattern": "4 lateral directions", "attackPattern": "4 diagonal squares", "specialAbilities": "Spikes: Hits all 4 diagonal squares simultaneously." },
   { "minion": "Iron Golem", "cost": 2, "movementPattern": "8 surrounding squares", "attackPattern": "3 adjacent lateral tiles", "specialAbilities": "Sweep: Hits all 3 targeted tiles at once in a lateral direction." },
-  { "minion": "Frog", "cost": 2, "movementPattern": "Up to 2 squares (8 directions)", "attackPattern": "None", "specialAbilities": "Tongue Pull (1 Mana): Pulls a unit in a lateral line 2 squares closer." },
+  { "minion": "Frog", "cost": 2, "movementPattern": "2 lateral, 1 diagonal", "attackPattern": "None", "specialAbilities": "Tongue Pull (1 Mana): Pulls a unit in a lateral line 2 squares closer." },
   { "minion": "Skeleton", "cost": 3, "movementPattern": "4 lateral directions", "attackPattern": "3-tile diagonal range", "specialAbilities": "Ranged: Hits targets up to 3 tiles away diagonally." },
   { "minion": "Blaze", "cost": 3, "movementPattern": "4 diagonal directions", "attackPattern": "2-tile lateral range", "specialAbilities": "Ranged: Hits targets up to 2 tiles away laterally." },
   { "minion": "Phantom", "cost": 3, "movementPattern": "8 surrounding squares", "attackPattern": "8 surrounding squares", "specialAbilities": "Ethereal: Can only spawn, move, or attack on dark tiles." },
