@@ -5,14 +5,17 @@ import { Button } from "@/components/ui/button";
 import { MinionIcon } from "./MinionIcon";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { ArrowLeft } from "lucide-react";
 
 interface DeckBuilderProps {
   playerColor: PlayerColor;
   onComplete: (deck: string[]) => void;
+  onBack: () => void;
+  initialDeck?: string[];
 }
 
-export function DeckBuilder({ playerColor, onComplete }: DeckBuilderProps) {
-  const [deck, setDeck] = useState<string[]>(["Villager"]);
+export function DeckBuilder({ playerColor, onComplete, onBack, initialDeck }: DeckBuilderProps) {
+  const [deck, setDeck] = useState<string[]>(initialDeck && initialDeck.length > 0 ? initialDeck : ["Villager"]);
 
   const addToDeck = (type: string) => {
     if (type === "Villager" && deck.includes("Villager")) return;
@@ -32,14 +35,24 @@ export function DeckBuilder({ playerColor, onComplete }: DeckBuilderProps) {
   return (
     <div className="container mx-auto p-4 md:p-6 flex flex-col h-screen max-h-screen overflow-hidden bg-background">
       <header className="mb-4 md:mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
-        <div>
-          <h1 className={cn(
-            "text-3xl md:text-4xl font-headline",
-            playerColor === 'Blue' ? "text-blue-500" : "text-red-500"
-          )}>
-            {playerColor} Army Assembly
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground">Select 15 minions for your tactical squad. Your King is ready.</p>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onBack}
+            className="rounded-full hover:bg-white/10"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </Button>
+          <div>
+            <h1 className={cn(
+              "text-3xl md:text-4xl font-headline",
+              playerColor === 'Blue' ? "text-blue-500" : "text-red-500"
+            )}>
+              {playerColor} Army Assembly
+            </h1>
+            <p className="text-sm md:text-base text-muted-foreground">Select 15 minions for your tactical squad. Your King is ready.</p>
+          </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <Button 

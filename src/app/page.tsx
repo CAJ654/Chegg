@@ -83,11 +83,27 @@ export default function Home() {
   }
 
   if (phase === 'deckBlue') {
-    return <DeckBuilder playerColor="Blue" onComplete={completeBlueDeck} key="deck-blue" />;
+    return (
+      <DeckBuilder 
+        playerColor="Blue" 
+        onComplete={completeBlueDeck} 
+        onBack={() => setPhase('landing')} 
+        initialDeck={blueDeck}
+        key="deck-blue" 
+      />
+    );
   }
 
   if (phase === 'deckRed') {
-    return <DeckBuilder playerColor="Red" onComplete={completeRedDeck} key="deck-red" />;
+    return (
+      <DeckBuilder 
+        playerColor="Red" 
+        onComplete={completeRedDeck} 
+        onBack={() => setPhase('deckBlue')} 
+        initialDeck={redDeck}
+        key="deck-red" 
+      />
+    );
   }
 
   return <CheggGame blueDeck={blueDeck} redDeck={redDeck} />;
