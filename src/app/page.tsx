@@ -5,7 +5,7 @@ import { useState } from "react";
 import { DeckBuilder } from "@/components/game/DeckBuilder";
 import { CheggGame } from "@/components/game/CheggGame";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, Sword, Zap, ExternalLink } from "lucide-react";
+import { ShieldCheck, Sword, ExternalLink } from "lucide-react";
 
 export default function Home() {
   const [phase, setPhase] = useState<'landing' | 'deckBlue' | 'deckRed' | 'game'>('landing');
@@ -36,11 +36,6 @@ export default function Home() {
         <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[80%] rounded-full bg-secondary/10 blur-[120px]" />
 
         <main className="z-10 text-center px-6 max-w-4xl w-full">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs md:text-sm font-medium mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
-            <Zap className="w-3 h-3 md:w-4 md:h-4 fill-primary" />
-            The Arcane Warfare Simulator
-          </div>
-          
           <h1 className="text-5xl md:text-8xl lg:text-9xl font-headline text-white mb-6 tracking-tighter leading-none animate-in fade-in duration-1000">
             CHEGG <span className="text-primary">TACTICS</span>
           </h1>
