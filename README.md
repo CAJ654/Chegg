@@ -17,6 +17,20 @@ git branch -M main
 git push -u origin main
 ```
 
+## Docker Instructions
+
+To build the Docker image for this application, run:
+
+```bash
+docker build -t chegg-arena .
+```
+
+To run the application using Docker Compose:
+
+```bash
+docker-compose up --build -d
+```
+
 ## Credits
 
 - **Rules:** [Gerg](https://youtube.com/@_gerg?si=nRy82bCPkNZAV9M_)
