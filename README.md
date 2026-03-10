@@ -47,8 +47,15 @@ To build the Docker image for this application, run (don't forget the dot at the
 docker build -t chegg .
 ```
 
+### Starting the Container
+To run the container you just built:
+
+```bash
+docker run -p 3000:3000 chegg
+```
+
 ### Running with Compose
-To run the application using Docker Compose:
+If you prefer using Docker Compose (recommended for production-like setups):
 
 ```bash
 docker-compose up --build -d
@@ -57,7 +64,7 @@ docker-compose up --build -d
 ## Credits
 
 - **Rules:** [Gerg](https://youtube.com/@_gerg?si=nRy82bCPkNZAV9M_)
-- **Code:** [CAJ654](https://github.com/CAJ654/Chegg)
+- **Code:** [CAJ654](https://github.com/CAJ654)
 
 ## Technology Stack
 
