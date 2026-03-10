@@ -19,13 +19,23 @@ git push -u origin main
 
 ## Docker Instructions
 
-### Installing Docker
+### Installing Docker (In-Studio / Linux Terminal)
+If you are working in a Linux-based terminal environment (like Firebase Studio's terminal), you can use the included official convenience script:
 
+```bash
+# Make the script executable
+chmod +x get-docker.sh
+
+# Run the installation script
+sudo ./get-docker.sh
+```
+
+### Manual Installation
 **Windows/macOS:**
 Download and install [Docker Desktop](https://docs.docker.com/get-docker/).
 
 **Linux (Ubuntu/Debian):**
-Run the following command to install Docker and Docker Compose:
+Run the following command to install Docker and Docker Compose manually:
 ```bash
 sudo apt update && sudo apt install docker.io docker-compose -y
 ```
