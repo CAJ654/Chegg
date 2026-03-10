@@ -19,12 +19,25 @@ git push -u origin main
 
 ## Docker Instructions
 
+### Installing Docker
+
+**Windows/macOS:**
+Download and install [Docker Desktop](https://docs.docker.com/get-docker/).
+
+**Linux (Ubuntu/Debian):**
+Run the following command to install Docker and Docker Compose:
+```bash
+sudo apt update && sudo apt install docker.io docker-compose -y
+```
+
+### Building the Image
 To build the Docker image for this application, run:
 
 ```bash
 docker build -t chegg-arena .
 ```
 
+### Running with Compose
 To run the application using Docker Compose:
 
 ```bash
