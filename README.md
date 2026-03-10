@@ -41,10 +41,10 @@ sudo apt update && sudo apt install docker.io docker-compose -y
 ```
 
 ### Building the Image
-To build the Docker image for this application, run:
+To build the Docker image for this application, run (don't forget the dot at the end!):
 
 ```bash
-docker build -t chegg-arena .
+docker build -t chegg .
 ```
 
 ### Running with Compose
