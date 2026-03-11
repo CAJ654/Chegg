@@ -30,14 +30,11 @@ chmod +x get-docker.sh
 sudo ./get-docker.sh
 ```
 
-### Manual Installation
-**Windows/macOS:**
-Download and install [Docker Desktop](https://docs.docker.com/get-docker/).
+### Starting the Docker Daemon
+Before building or running images, ensure the Docker service is active:
 
-**Linux (Ubuntu/Debian):**
-Run the following command to install Docker and Docker Compose manually:
 ```bash
-sudo apt update && sudo apt install docker.io docker-compose -y
+sudo systemctl start docker
 ```
 
 ### Building the Image
