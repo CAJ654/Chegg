@@ -17,46 +17,29 @@ git branch -M main
 git push -u origin main
 ```
 
-## Docker Instructions
+## Docker Instructions (Firebase Studio / IDX)
 
-### Installing Docker (In-Studio / Linux Terminal)
-If you are working in a Linux-based terminal environment (like Firebase Studio's terminal), you can use the included official convenience script:
+In this environment, Docker is often pre-configured. If you encounter permissions errors with `sudo`, it is likely because the environment manages root access differently.
 
+### 1. Check Docker Status
+Verify if Docker is already available and usable without sudo:
 ```bash
-# Make the script executable
-chmod +x get-docker.sh
-
-# Run the installation script
-sudo ./get-docker.sh
+docker --version
 ```
 
-### Starting the Docker Daemon
-Before building or running images, ensure the Docker service is active:
-
-```bash
-sudo systemctl start docker
-```
-
-### Building the Image
-To build the Docker image for this application, run (don't forget the dot at the end!):
-
+### 2. Building the Image
+Use the following command (the dot at the end is required):
 ```bash
 docker build -t chegg .
 ```
 
-### Starting the Container
-To run the container you just built:
-
+### 3. Running the Container
 ```bash
 docker run -p 3000:3000 chegg
 ```
 
-### Running with Compose
-If you prefer using Docker Compose (recommended for production-like setups):
-
-```bash
-docker-compose up --build -d
-```
+### Troubleshooting "Sudo" Errors
+If you see an error like `sudo: /usr/bin/sudo must be owned by uid 0`, it is because `pkgs.sudo` was added to `.idx/dev.nix`. Removing that entry and rebuilding the environment will restore the system's built-in `sudo`.
 
 ## Credits
 
