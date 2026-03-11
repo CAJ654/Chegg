@@ -7,24 +7,24 @@ A strategic Minecraft-based board game of minions and mana, based on the rules c
 
 Official Rulebook: [Google Doc](https://docs.google.com/document/d/1TM736HhNsh2nz8l3L-a6PuWAVxbnBSF__NB7qX7Wdlw/edit?usp=drivesdk)
 
-## Project Setup
+## Project Setup (Git)
 
 To connect this project to your GitHub repository and push your changes, run the following commands in your terminal:
 
 ```bash
-git remote add origin https://github.com/CAJ654/Chegg.git
+git init
+git add .
+git commit -m "Initial commit"
 git branch -M main
+git remote add origin https://github.com/CAJ654/Chegg.git
 git push -u origin main
 ```
 
 ## Docker Instructions (Firebase Studio / IDX)
 
-In this environment, Docker is often pre-configured. If you encounter permissions errors with `sudo`, it is likely because the environment manages root access differently.
-
-First start docker with: sudo systemctl start docker
+In this environment, Docker is often pre-configured.
 
 ### 1. Check Docker Status
-Verify if Docker is already available and usable without sudo:
 ```bash
 docker --version
 ```
@@ -41,7 +41,7 @@ docker run -p 3000:3000 chegg
 ```
 
 ### Troubleshooting "Sudo" Errors
-If you see an error like `sudo: /usr/bin/sudo must be owned by uid 0`, it is because `pkgs.sudo` was added to `.idx/dev.nix`. Removing that entry and rebuilding the environment will restore the system's built-in `sudo`.
+If you see an error like `sudo: /usr/bin/sudo must be owned by uid 0`, it is because `pkgs.sudo` was added to `.idx/dev.nix`. Removing that entry and rebuilding the environment will restore the system's built-in `sudo`. Do not add `pkgs.sudo` manually.
 
 ## Credits
 
