@@ -21,6 +21,8 @@ git push -u origin main
 
 In this environment, Docker is often pre-configured. If you encounter permissions errors with `sudo`, it is likely because the environment manages root access differently.
 
+First start docker with: sudo systemctl start docker
+
 ### 1. Check Docker Status
 Verify if Docker is already available and usable without sudo:
 ```bash
