@@ -7,22 +7,28 @@ A strategic Minecraft-based board game of minions and mana, based on the rules c
 
 Official Rulebook: [Google Doc](https://docs.google.com/document/d/1TM736HhNsh2nz8l3L-a6PuWAVxbnBSF__NB7qX7Wdlw/edit?usp=drivesdk)
 
-## Project Setup (Git)
+## Git Instructions
 
-To connect this project to your GitHub repository and push your changes, run the following commands in your terminal:
-
+### Initial Setup
+To connect this project to your GitHub repository for the first time:
 ```bash
 git init
 git add .
 git commit -m "Initial commit"
 git branch -M main
 git remote add origin https://github.com/CAJ654/Chegg.git
+```
+
+### Merging with Remote (Fixing "Unrelated Histories")
+If you have files on GitHub (like a README or License) that aren't on your local machine, run these commands to sync them:
+```bash
+git fetch origin
+git merge origin/main --allow-unrelated-histories
+# After resolving any conflicts:
 git push -u origin main
 ```
 
 ## Docker Instructions (Firebase Studio / IDX)
-
-In this environment, Docker is often pre-configured.
 
 ### 1. Check Docker Status
 ```bash
