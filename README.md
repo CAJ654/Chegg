@@ -29,6 +29,7 @@ git push -u origin main
 ```
 
 ## Docker Instructions (Firebase Studio / IDX)
+Docker stuff updated
 
 ### 1. Check Docker Status
 ```bash
